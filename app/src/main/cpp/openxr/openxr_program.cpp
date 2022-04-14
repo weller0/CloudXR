@@ -2,18 +2,19 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pch.h"
 #include "common.h"
 #include "options.h"
 #include "platformdata.h"
 #include "platformplugin.h"
 #include "graphicsplugin.h"
 #include "openxr_program.h"
-#include <common/xr_linear.h>
+#include "xr_linear.h"
 #include <array>
 #include <cmath>
+#include <map>
+#include <android/native_window.h>
 
-extern ANativeWindow* NativeWindow;;
+extern ANativeWindow* NativeWindow;
 namespace {
 
 

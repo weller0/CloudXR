@@ -12,7 +12,6 @@ namespace ssnwt {
         };
         EGLint format;
         EGLint numConfigs;
-        EGLConfig config = nullptr;
 
         display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
@@ -80,6 +79,7 @@ namespace ssnwt {
             }
             eglTerminate(display);
         }
+        config = nullptr;
         display = EGL_NO_DISPLAY;
         context = EGL_NO_CONTEXT;
         surface = EGL_NO_SURFACE;

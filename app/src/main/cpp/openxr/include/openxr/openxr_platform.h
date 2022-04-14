@@ -14,6 +14,8 @@
 
 #include "openxr.h"
 #include "vulkan/vulkan.h"
+#include <EGL/egl.h>
+#include <jni.h>
 
 #ifdef __cplusplus
 extern "C" {

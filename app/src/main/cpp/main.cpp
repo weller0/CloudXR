@@ -4,8 +4,7 @@
 #include "EGLHelper.h"
 #include "log.h"
 
-ssnwt::EGLHelper eglHelper;
-ssnwt::GraphicRender graphicRender;
+ANativeWindow *NativeWindow;
 
 #define CASE(x) case x: return #x
 
@@ -32,18 +31,28 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
     switch (cmd) {
         case APP_CMD_INIT_WINDOW:
             // The window is being shown, get it ready.
-            if (app->window != nullptr) {
-                eglHelper.initializeEGL(app->window);
-            }
+            NativeWindow = app->window;
             break;
+        case APP_CMD_DESTROY:
         case APP_CMD_TERM_WINDOW:
             // The window is being hidden or closed, clean it up.
-            eglHelper.releaseEGL();
+            NativeWindow = nullptr;
             break;
         default:
             break;
     }
 }
+
+#include <memory>
+#include <string>
+#include <openxr/openxr_platform.h>
+#include <chrono>
+#include <thread>
+#include "options.h"
+#include "platformdata.h"
+#include "platformplugin.h"
+#include "graphicsplugin.h"
+#include "openxr_program.h"
 
 /**
  * This is the main entry point of a native application that is using
@@ -51,32 +60,74 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
  * event loop for receiving input events and doing other things.
  */
 void android_main(struct android_app *state) {
-    state->onAppCmd = engine_handle_cmd;
+    try {
+        JNIEnv *Env;
+        state->activity->vm->AttachCurrentThread(&Env, nullptr);
 
-    // loop waiting for stuff to do.
-    while (true) {
-        // Read all pending events.
-        int events;
-        struct android_poll_source *source;
-        while ((ALooper_pollAll(eglHelper.isReady() ? 0 : -1, nullptr, &events,
-                                (void **) &source)) >= 0) {
+        state->onAppCmd = engine_handle_cmd;
 
-            // Process this event.
-            if (source != nullptr) {
-                source->process(state, source);
+        std::shared_ptr<Options> options = std::make_shared<Options>();
+        std::shared_ptr<PlatformData> data = std::make_shared<PlatformData>();
+        data->applicationVM = state->activity->vm;
+        data->applicationActivity = state->activity->clazz;
+
+        std::shared_ptr<IPlatformPlugin> platformPlugin = CreatePlatformPlugin(options, data);
+        std::shared_ptr<IGraphicsPlugin> graphicsPlugin = CreateGraphicsPlugin(options,
+                                                                               platformPlugin);
+        std::shared_ptr<IOpenXrProgram> program = CreateOpenXrProgram(options, platformPlugin,
+                                                                      graphicsPlugin);
+        // Initialize the loader for this platform
+        PFN_xrInitializeLoaderKHR initializeLoader = nullptr;
+        ALOGD("111 XR_SUCCEEDED 1111");
+        if (XR_SUCCEEDED(
+                xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR",
+                                      (PFN_xrVoidFunction *) (&initializeLoader)))) {
+            XrLoaderInitInfoAndroidKHR loaderInitInfoAndroid;
+            memset(&loaderInitInfoAndroid, 0, sizeof(loaderInitInfoAndroid));
+            loaderInitInfoAndroid.type = XR_TYPE_LOADER_INIT_INFO_ANDROID_KHR;
+            loaderInitInfoAndroid.next = XR_NULL_HANDLE;
+            loaderInitInfoAndroid.applicationVM = state->activity->vm;
+            loaderInitInfoAndroid.applicationContext = state->activity->clazz;
+            initializeLoader((const XrLoaderInitInfoBaseHeaderKHR *) &loaderInitInfoAndroid);
+        }
+        program->CreateInstance();
+        program->InitializeSystem();
+        program->InitializeSession();
+        program->CreateSwapchains();
+        bool requestRestart = false;
+        bool exitRenderLoop = false;
+        while (state->destroyRequested == 0) {
+            for (;;) {
+                int events;
+                struct android_poll_source *source;
+                // If the timeout is zero, returns immediately without blocking.
+                // If the timeout is negative, waits indefinitely until an event appears.
+                const int timeoutMilliseconds =
+                        (NativeWindow == nullptr && !program->IsSessionRunning() &&
+                         state->destroyRequested == 0) ? -1 : 0;
+                if (ALooper_pollAll(timeoutMilliseconds, nullptr, &events, (void **) &source) < 0) {
+                    break;
+                }
+                // Process this event.
+                if (source != nullptr) {
+                    source->process(state, source);
+                }
             }
 
-            // Check if we are exiting.
-            if (state->destroyRequested != 0) {
-                eglHelper.releaseEGL();
-                return;
+            program->PollEvents(&exitRenderLoop, &requestRestart);
+            if (!program->IsSessionRunning()) {
+                // Throttle loop since xrWaitFrame won't be called.
+                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                continue;
             }
-        }
 
-        if (eglHelper.isReady()) {
-            graphicRender.clear();
-            eglHelper.swapBuffer();
+            program->PollActions();
+            program->RenderFrame();
         }
+    } catch (const std::exception &ex) {
+        ALOGE("exception:%s", ex.what());
+    } catch (...) {
+        ALOGE("exception:Unknown Error");
     }
 }
 //END_INCLUDE(all)

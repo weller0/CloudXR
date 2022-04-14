@@ -22,6 +22,8 @@ namespace ssnwt {
 
         EGLSurface getEGLSurface() { return surface; }
 
+        EGLConfig getEGLConfig() { return config; }
+
         bool isReady() { return ready; }
 
     private:
@@ -31,6 +33,7 @@ namespace ssnwt {
         EGLContext context = EGL_NO_CONTEXT;
         EGLDisplay display = EGL_NO_DISPLAY;
         EGLSurface surface = EGL_NO_SURFACE;
+        EGLConfig config = nullptr;
     };
 }
 
