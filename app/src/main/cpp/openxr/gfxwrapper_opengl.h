@@ -152,7 +152,7 @@ Platform headers / declarations
 #if defined(_MSC_VER)
 #pragma warning(disable : 4204)  // nonstandard extension used : non-constant aggregate initializer
 #pragma warning(disable : 4221)  // nonstandard extension used: 'layers': cannot be initialized using address of automatic variable
-                                 // 'layerProjection'
+// 'layerProjection'
 #pragma warning(disable : 4255)  // '<name>' : no function prototype given: converting '()' to '(void)'
 #pragma warning(disable : 4668)  // '__cplusplus' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
 #pragma warning(disable : 4710)  // 'int printf(const char *const ,...)': function not inlined
@@ -341,13 +341,17 @@ CGLError CGLUpdateContext(CGLContextObj ctx);
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #include <GLES3/gl3.h>
+
 #if OPENGL_VERSION_MAJOR == 3
 #if OPENGL_VERSION_MINOR == 1
 #include <GLES3/gl31.h>
 #elif OPENGL_VERSION_MINOR == 2
+
 #include <GLES3/gl32.h>
+
 #endif
 #endif
+
 #include <GLES3/gl3ext.h>
 
 #define GRAPHICS_API_OPENGL_ES 1
@@ -451,8 +455,11 @@ Multi-sampling support
 */
 
 #if !defined(GL_EXT_framebuffer_multisample)
-typedef void (*PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC)(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width,
+
+typedef void (*PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC)(GLenum target, GLsizei samples,
+                                                           GLenum internalformat, GLsizei width,
                                                            GLsizei height);
+
 #endif
 
 #if !defined(GL_EXT_multisampled_render_to_texture)
@@ -633,9 +640,13 @@ extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC glRenderbufferStorageMultisamp
 #define GL_BUFFER_STORAGE_FLAGS 0x8220                  // GL_BUFFER_STORAGE_FLAGS_EXT
 #endif
 
-typedef void(GL_APIENTRY *PFNGLBUFFERSTORAGEEXTPROC)(GLenum target, GLsizeiptr size, const void *data, GLbitfield flags);
-typedef void(GL_APIENTRY *PFNGLTEXSTORAGE3DMULTISAMPLEPROC)(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width,
-                                                            GLsizei height, GLsizei depth, GLboolean fixedsamplelocations);
+typedef void(GL_APIENTRY *PFNGLBUFFERSTORAGEEXTPROC)(GLenum target, GLsizeiptr size,
+                                                     const void *data, GLbitfield flags);
+
+typedef void(GL_APIENTRY *PFNGLTEXSTORAGE3DMULTISAMPLEPROC)(GLenum target, GLsizei samples,
+                                                            GLenum internalformat, GLsizei width,
+                                                            GLsizei height, GLsizei depth,
+                                                            GLboolean fixedsamplelocations);
 
 // EGL_KHR_fence_sync, GL_OES_EGL_sync, VG_KHR_EGL_sync
 extern PFNEGLCREATESYNCKHRPROC eglCreateSyncKHR;
@@ -720,6 +731,7 @@ typedef struct {
 } ksDriverInstance;
 
 bool ksDriverInstance_Create(ksDriverInstance *instance);
+
 void ksDriverInstance_Destroy(ksDriverInstance *instance);
 
 /*
@@ -744,7 +756,9 @@ typedef enum {
     KS_GPU_QUEUE_PROPERTY_TRANSFER = BIT(2)
 } ksGpuQueueProperty;
 
-typedef enum { KS_GPU_QUEUE_PRIORITY_LOW, KS_GPU_QUEUE_PRIORITY_MEDIUM, KS_GPU_QUEUE_PRIORITY_HIGH } ksGpuQueuePriority;
+typedef enum {
+    KS_GPU_QUEUE_PRIORITY_LOW, KS_GPU_QUEUE_PRIORITY_MEDIUM, KS_GPU_QUEUE_PRIORITY_HIGH
+} ksGpuQueuePriority;
 
 #define MAX_QUEUES 16
 
@@ -759,7 +773,9 @@ typedef struct {
     ksGpuQueueInfo queueInfo;
 } ksGpuDevice;
 
-bool ksGpuDevice_Create(ksGpuDevice *device, ksDriverInstance *instance, const ksGpuQueueInfo *queueInfo);
+bool ksGpuDevice_Create(ksGpuDevice *device, ksDriverInstance *instance,
+                        const ksGpuQueueInfo *queueInfo);
+
 void ksGpuDevice_Destroy(ksGpuDevice *device);
 
 /*
@@ -869,10 +885,15 @@ typedef struct {
 } ksGpuSurfaceBits;
 
 bool ksGpuContext_CreateShared(ksGpuContext *context, const ksGpuContext *other, int queueIndex);
+
 void ksGpuContext_Destroy(ksGpuContext *context);
+
 void ksGpuContext_WaitIdle(ksGpuContext *context);
+
 void ksGpuContext_SetCurrent(ksGpuContext *context);
+
 void ksGpuContext_UnsetCurrent(ksGpuContext *context);
+
 bool ksGpuContext_CheckCurrent(ksGpuContext *context);
 
 /*
@@ -997,15 +1018,25 @@ typedef struct {
 #endif
 } ksGpuWindow;
 
-bool ksGpuWindow_Create(ksGpuWindow *window, ksDriverInstance *instance, const ksGpuQueueInfo *queueInfo, int queueIndex,
-                        ksGpuSurfaceColorFormat colorFormat, ksGpuSurfaceDepthFormat depthFormat, ksGpuSampleCount sampleCount,
-                        int width, int height, bool fullscreen);
+bool
+ksGpuWindow_Create(ksGpuWindow *window, ksDriverInstance *instance, const ksGpuQueueInfo *queueInfo,
+                   int queueIndex,
+                   ksGpuSurfaceColorFormat colorFormat, ksGpuSurfaceDepthFormat depthFormat,
+                   ksGpuSampleCount sampleCount,
+                   int width, int height, bool fullscreen);
+
 void ksGpuWindow_Destroy(ksGpuWindow *window);
+
 void ksGpuWindow_Exit(ksGpuWindow *window);
+
 ksGpuWindowEvent ksGpuWindow_ProcessEvents(ksGpuWindow *window);
+
 void ksGpuWindow_SwapInterval(ksGpuWindow *window, int swapInterval);
+
 void ksGpuWindow_SwapBuffers(ksGpuWindow *window);
+
 ksNanoseconds ksGpuWindow_GetNextSwapTimeNanoseconds(ksGpuWindow *window);
+
 ksNanoseconds ksGpuWindow_GetFrameTimeNanoseconds(ksGpuWindow *window);
 
 /*
@@ -1038,7 +1069,9 @@ typedef struct {
 } ksGpuTimer;
 
 void ksGpuTimer_Create(ksGpuContext *context, ksGpuTimer *timer);
+
 void ksGpuTimer_Destroy(ksGpuContext *context, ksGpuTimer *timer);
+
 ksNanoseconds ksGpuTimer_GetNanoseconds(ksGpuTimer *timer);
 
 #ifdef __cplusplus

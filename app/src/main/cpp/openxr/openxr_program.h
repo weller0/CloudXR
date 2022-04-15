@@ -22,7 +22,7 @@ struct IOpenXrProgram {
     virtual void CreateSwapchains() = 0;
 
     // Process any events in the event queue.
-    virtual void PollEvents(bool* exitRenderLoop, bool* requestRestart) = 0;
+    virtual void PollEvents(bool *exitRenderLoop, bool *requestRestart) = 0;
 
     // Manage session lifecycle to track if RenderFrame should be called.
     virtual bool IsSessionRunning() const = 0;
@@ -43,6 +43,14 @@ struct Swapchain {
     int32_t height;
 };
 
-std::shared_ptr<IOpenXrProgram> CreateOpenXrProgram(const std::shared_ptr<Options>& options,
-                                                    const std::shared_ptr<IPlatformPlugin>& platformPlugin,
-                                                    const std::shared_ptr<IGraphicsPlugin>& graphicsPlugin);
+struct Options {
+    std::string GraphicsPlugin{"OpenGLES"};
+    std::string FormFactor{"Hmd"};
+    std::string ViewConfiguration{"Stereo"};
+    std::string EnvironmentBlendMode{"Opaque"};
+    std::string AppSpace{"Local"};
+};
+
+std::shared_ptr<IOpenXrProgram> CreateOpenXrProgram(const std::shared_ptr<Options> &options,
+                                                    const std::shared_ptr<IPlatformPlugin> &platformPlugin,
+                                                    const std::shared_ptr<IGraphicsPlugin> &graphicsPlugin);

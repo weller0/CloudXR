@@ -48,8 +48,6 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd) {
 #include <openxr/openxr_platform.h>
 #include <chrono>
 #include <thread>
-#include "options.h"
-#include "platformdata.h"
 #include "platformplugin.h"
 #include "graphicsplugin.h"
 #include "openxr_program.h"

@@ -126,7 +126,9 @@ static const XrColor4f XrColorCyan = {0.0f, 1.0f, 1.0f, 1.0f};
 static const XrColor4f XrColorLightGrey = {0.7f, 0.7f, 0.7f, 1.0f};
 static const XrColor4f XrColorDarkGrey = {0.3f, 0.3f, 0.3f, 1.0f};
 
-enum GraphicsAPI { GRAPHICS_VULKAN, GRAPHICS_OPENGL, GRAPHICS_OPENGL_ES, GRAPHICS_D3D };
+enum GraphicsAPI {
+    GRAPHICS_VULKAN, GRAPHICS_OPENGL, GRAPHICS_OPENGL_ES, GRAPHICS_D3D
+};
 
 // Column-major, pre-multiplied. This type does not exist in the OpenXR API and is provided for convenience.
 struct XrMatrix4x4f {
@@ -139,75 +141,82 @@ inline static float XrRcpSqrt(const float x) {
     return rcp;
 }
 
-inline static void XrVector3f_Set(XrVector3f* v, const float value) {
+inline static void XrVector3f_Set(XrVector3f *v, const float value) {
     v->x = value;
     v->y = value;
     v->z = value;
 }
 
-inline static void XrVector3f_Add(XrVector3f* result, const XrVector3f* a, const XrVector3f* b) {
+inline static void XrVector3f_Add(XrVector3f *result, const XrVector3f *a, const XrVector3f *b) {
     result->x = a->x + b->x;
     result->y = a->y + b->y;
     result->z = a->z + b->z;
 }
 
-inline static void XrVector3f_Sub(XrVector3f* result, const XrVector3f* a, const XrVector3f* b) {
+inline static void XrVector3f_Sub(XrVector3f *result, const XrVector3f *a, const XrVector3f *b) {
     result->x = a->x - b->x;
     result->y = a->y - b->y;
     result->z = a->z - b->z;
 }
 
-inline static void XrVector3f_Min(XrVector3f* result, const XrVector3f* a, const XrVector3f* b) {
+inline static void XrVector3f_Min(XrVector3f *result, const XrVector3f *a, const XrVector3f *b) {
     result->x = (a->x < b->x) ? a->x : b->x;
     result->y = (a->y < b->y) ? a->y : b->y;
     result->z = (a->z < b->z) ? a->z : b->z;
 }
 
-inline static void XrVector3f_Max(XrVector3f* result, const XrVector3f* a, const XrVector3f* b) {
+inline static void XrVector3f_Max(XrVector3f *result, const XrVector3f *a, const XrVector3f *b) {
     result->x = (a->x > b->x) ? a->x : b->x;
     result->y = (a->y > b->y) ? a->y : b->y;
     result->z = (a->z > b->z) ? a->z : b->z;
 }
 
-inline static void XrVector3f_Decay(XrVector3f* result, const XrVector3f* a, const float value) {
+inline static void XrVector3f_Decay(XrVector3f *result, const XrVector3f *a, const float value) {
     result->x = (fabsf(a->x) > value) ? ((a->x > 0.0f) ? (a->x - value) : (a->x + value)) : 0.0f;
     result->y = (fabsf(a->y) > value) ? ((a->y > 0.0f) ? (a->y - value) : (a->y + value)) : 0.0f;
     result->z = (fabsf(a->z) > value) ? ((a->z > 0.0f) ? (a->z - value) : (a->z + value)) : 0.0f;
 }
 
-inline static void XrVector3f_Lerp(XrVector3f* result, const XrVector3f* a, const XrVector3f* b, const float fraction) {
+inline static void XrVector3f_Lerp(XrVector3f *result, const XrVector3f *a, const XrVector3f *b,
+                                   const float fraction) {
     result->x = a->x + fraction * (b->x - a->x);
     result->y = a->y + fraction * (b->y - a->y);
     result->z = a->z + fraction * (b->z - a->z);
 }
 
-inline static void XrVector3f_Scale(XrVector3f* result, const XrVector3f* a, const float scaleFactor) {
+inline static void
+XrVector3f_Scale(XrVector3f *result, const XrVector3f *a, const float scaleFactor) {
     result->x = a->x * scaleFactor;
     result->y = a->y * scaleFactor;
     result->z = a->z * scaleFactor;
 }
 
-inline static float XrVector3f_Dot(const XrVector3f* a, const XrVector3f* b) { return a->x * b->x + a->y * b->y + a->z * b->z; }
+inline static float XrVector3f_Dot(const XrVector3f *a, const XrVector3f *b) {
+    return a->x * b->x + a->y * b->y + a->z * b->z;
+}
 
 // Compute cross product, which generates a normal vector.
 // Direction vector can be determined by right-hand rule: Pointing index finder in
 // direction a and middle finger in direction b, thumb will point in Cross(a, b).
-inline static void XrVector3f_Cross(XrVector3f* result, const XrVector3f* a, const XrVector3f* b) {
+inline static void XrVector3f_Cross(XrVector3f *result, const XrVector3f *a, const XrVector3f *b) {
     result->x = a->y * b->z - a->z * b->y;
     result->y = a->z * b->x - a->x * b->z;
     result->x = a->x * b->y - a->y * b->x;
 }
 
-inline static void XrVector3f_Normalize(XrVector3f* v) {
+inline static void XrVector3f_Normalize(XrVector3f *v) {
     const float lengthRcp = XrRcpSqrt(v->x * v->x + v->y * v->y + v->z * v->z);
     v->x *= lengthRcp;
     v->y *= lengthRcp;
     v->z *= lengthRcp;
 }
 
-inline static float XrVector3f_Length(const XrVector3f* v) { return sqrtf(v->x * v->x + v->y * v->y + v->z * v->z); }
+inline static float XrVector3f_Length(const XrVector3f *v) {
+    return sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+}
 
-inline static void XrQuaternionf_CreateFromAxisAngle(XrQuaternionf* result, const XrVector3f* axis, const float angleInRadians) {
+inline static void XrQuaternionf_CreateFromAxisAngle(XrQuaternionf *result, const XrVector3f *axis,
+                                                     const float angleInRadians) {
     float s = sinf(angleInRadians / 2.0f);
     float lengthRcp = XrRcpSqrt(axis->x * axis->x + axis->y * axis->y + axis->z * axis->z);
     result->x = s * axis->x * lengthRcp;
@@ -216,7 +225,9 @@ inline static void XrQuaternionf_CreateFromAxisAngle(XrQuaternionf* result, cons
     result->w = cosf(angleInRadians / 2.0f);
 }
 
-inline static void XrQuaternionf_Lerp(XrQuaternionf* result, const XrQuaternionf* a, const XrQuaternionf* b, const float fraction) {
+inline static void
+XrQuaternionf_Lerp(XrQuaternionf *result, const XrQuaternionf *a, const XrQuaternionf *b,
+                   const float fraction) {
     const float s = a->x * b->x + a->y * b->y + a->z * b->z + a->w * b->w;
     const float fa = 1.0f - fraction;
     const float fb = (s < 0.0f) ? -fraction : fraction;
@@ -231,7 +242,8 @@ inline static void XrQuaternionf_Lerp(XrQuaternionf* result, const XrQuaternionf
     result->w = w * lengthRcp;
 }
 
-inline static void XrQuaternionf_Multiply(XrQuaternionf* result, const XrQuaternionf* a, const XrQuaternionf* b) {
+inline static void
+XrQuaternionf_Multiply(XrQuaternionf *result, const XrQuaternionf *a, const XrQuaternionf *b) {
     result->x = (b->w * a->x) + (b->x * a->w) + (b->y * a->z) - (b->z * a->y);
     result->y = (b->w * a->y) - (b->x * a->z) + (b->y * a->w) + (b->z * a->x);
     result->z = (b->w * a->z) + (b->x * a->y) - (b->y * a->x) + (b->z * a->w);
@@ -239,7 +251,8 @@ inline static void XrQuaternionf_Multiply(XrQuaternionf* result, const XrQuatern
 }
 
 // Use left-multiplication to accumulate transformations.
-inline static void XrMatrix4x4f_Multiply(XrMatrix4x4f* result, const XrMatrix4x4f* a, const XrMatrix4x4f* b) {
+inline static void
+XrMatrix4x4f_Multiply(XrMatrix4x4f *result, const XrMatrix4x4f *a, const XrMatrix4x4f *b) {
     result->m[0] = a->m[0] * b->m[0] + a->m[4] * b->m[1] + a->m[8] * b->m[2] + a->m[12] * b->m[3];
     result->m[1] = a->m[1] * b->m[0] + a->m[5] * b->m[1] + a->m[9] * b->m[2] + a->m[13] * b->m[3];
     result->m[2] = a->m[2] * b->m[0] + a->m[6] * b->m[1] + a->m[10] * b->m[2] + a->m[14] * b->m[3];
@@ -252,17 +265,23 @@ inline static void XrMatrix4x4f_Multiply(XrMatrix4x4f* result, const XrMatrix4x4
 
     result->m[8] = a->m[0] * b->m[8] + a->m[4] * b->m[9] + a->m[8] * b->m[10] + a->m[12] * b->m[11];
     result->m[9] = a->m[1] * b->m[8] + a->m[5] * b->m[9] + a->m[9] * b->m[10] + a->m[13] * b->m[11];
-    result->m[10] = a->m[2] * b->m[8] + a->m[6] * b->m[9] + a->m[10] * b->m[10] + a->m[14] * b->m[11];
-    result->m[11] = a->m[3] * b->m[8] + a->m[7] * b->m[9] + a->m[11] * b->m[10] + a->m[15] * b->m[11];
+    result->m[10] =
+            a->m[2] * b->m[8] + a->m[6] * b->m[9] + a->m[10] * b->m[10] + a->m[14] * b->m[11];
+    result->m[11] =
+            a->m[3] * b->m[8] + a->m[7] * b->m[9] + a->m[11] * b->m[10] + a->m[15] * b->m[11];
 
-    result->m[12] = a->m[0] * b->m[12] + a->m[4] * b->m[13] + a->m[8] * b->m[14] + a->m[12] * b->m[15];
-    result->m[13] = a->m[1] * b->m[12] + a->m[5] * b->m[13] + a->m[9] * b->m[14] + a->m[13] * b->m[15];
-    result->m[14] = a->m[2] * b->m[12] + a->m[6] * b->m[13] + a->m[10] * b->m[14] + a->m[14] * b->m[15];
-    result->m[15] = a->m[3] * b->m[12] + a->m[7] * b->m[13] + a->m[11] * b->m[14] + a->m[15] * b->m[15];
+    result->m[12] =
+            a->m[0] * b->m[12] + a->m[4] * b->m[13] + a->m[8] * b->m[14] + a->m[12] * b->m[15];
+    result->m[13] =
+            a->m[1] * b->m[12] + a->m[5] * b->m[13] + a->m[9] * b->m[14] + a->m[13] * b->m[15];
+    result->m[14] =
+            a->m[2] * b->m[12] + a->m[6] * b->m[13] + a->m[10] * b->m[14] + a->m[14] * b->m[15];
+    result->m[15] =
+            a->m[3] * b->m[12] + a->m[7] * b->m[13] + a->m[11] * b->m[14] + a->m[15] * b->m[15];
 }
 
 // Creates the transpose of the given matrix.
-inline static void XrMatrix4x4f_Transpose(XrMatrix4x4f* result, const XrMatrix4x4f* src) {
+inline static void XrMatrix4x4f_Transpose(XrMatrix4x4f *result, const XrMatrix4x4f *src) {
     result->m[0] = src->m[0];
     result->m[1] = src->m[4];
     result->m[2] = src->m[8];
@@ -285,20 +304,26 @@ inline static void XrMatrix4x4f_Transpose(XrMatrix4x4f* result, const XrMatrix4x
 }
 
 // Returns a 3x3 minor of a 4x4 matrix.
-inline static float XrMatrix4x4f_Minor(const XrMatrix4x4f* matrix, int r0, int r1, int r2, int c0, int c1, int c2) {
+inline static float
+XrMatrix4x4f_Minor(const XrMatrix4x4f *matrix, int r0, int r1, int r2, int c0, int c1, int c2) {
     return matrix->m[4 * r0 + c0] *
-               (matrix->m[4 * r1 + c1] * matrix->m[4 * r2 + c2] - matrix->m[4 * r2 + c1] * matrix->m[4 * r1 + c2]) -
+           (matrix->m[4 * r1 + c1] * matrix->m[4 * r2 + c2] -
+            matrix->m[4 * r2 + c1] * matrix->m[4 * r1 + c2]) -
            matrix->m[4 * r0 + c1] *
-               (matrix->m[4 * r1 + c0] * matrix->m[4 * r2 + c2] - matrix->m[4 * r2 + c0] * matrix->m[4 * r1 + c2]) +
+           (matrix->m[4 * r1 + c0] * matrix->m[4 * r2 + c2] -
+            matrix->m[4 * r2 + c0] * matrix->m[4 * r1 + c2]) +
            matrix->m[4 * r0 + c2] *
-               (matrix->m[4 * r1 + c0] * matrix->m[4 * r2 + c1] - matrix->m[4 * r2 + c0] * matrix->m[4 * r1 + c1]);
+           (matrix->m[4 * r1 + c0] * matrix->m[4 * r2 + c1] -
+            matrix->m[4 * r2 + c0] * matrix->m[4 * r1 + c1]);
 }
 
 // Calculates the inverse of a 4x4 matrix.
-inline static void XrMatrix4x4f_Invert(XrMatrix4x4f* result, const XrMatrix4x4f* src) {
+inline static void XrMatrix4x4f_Invert(XrMatrix4x4f *result, const XrMatrix4x4f *src) {
     const float rcpDet =
-        1.0f / (src->m[0] * XrMatrix4x4f_Minor(src, 1, 2, 3, 1, 2, 3) - src->m[1] * XrMatrix4x4f_Minor(src, 1, 2, 3, 0, 2, 3) +
-                src->m[2] * XrMatrix4x4f_Minor(src, 1, 2, 3, 0, 1, 3) - src->m[3] * XrMatrix4x4f_Minor(src, 1, 2, 3, 0, 1, 2));
+            1.0f / (src->m[0] * XrMatrix4x4f_Minor(src, 1, 2, 3, 1, 2, 3) -
+                    src->m[1] * XrMatrix4x4f_Minor(src, 1, 2, 3, 0, 2, 3) +
+                    src->m[2] * XrMatrix4x4f_Minor(src, 1, 2, 3, 0, 1, 3) -
+                    src->m[3] * XrMatrix4x4f_Minor(src, 1, 2, 3, 0, 1, 2));
 
     result->m[0] = XrMatrix4x4f_Minor(src, 1, 2, 3, 1, 2, 3) * rcpDet;
     result->m[1] = -XrMatrix4x4f_Minor(src, 0, 2, 3, 1, 2, 3) * rcpDet;
@@ -319,7 +344,7 @@ inline static void XrMatrix4x4f_Invert(XrMatrix4x4f* result, const XrMatrix4x4f*
 }
 
 // Calculates the inverse of a rigid body transform.
-inline static void XrMatrix4x4f_InvertRigidBody(XrMatrix4x4f* result, const XrMatrix4x4f* src) {
+inline static void XrMatrix4x4f_InvertRigidBody(XrMatrix4x4f *result, const XrMatrix4x4f *src) {
     result->m[0] = src->m[0];
     result->m[1] = src->m[4];
     result->m[2] = src->m[8];
@@ -339,7 +364,7 @@ inline static void XrMatrix4x4f_InvertRigidBody(XrMatrix4x4f* result, const XrMa
 }
 
 // Creates an identity matrix.
-inline static void XrMatrix4x4f_CreateIdentity(XrMatrix4x4f* result) {
+inline static void XrMatrix4x4f_CreateIdentity(XrMatrix4x4f *result) {
     result->m[0] = 1.0f;
     result->m[1] = 0.0f;
     result->m[2] = 0.0f;
@@ -359,7 +384,8 @@ inline static void XrMatrix4x4f_CreateIdentity(XrMatrix4x4f* result) {
 }
 
 // Creates a translation matrix.
-inline static void XrMatrix4x4f_CreateTranslation(XrMatrix4x4f* result, const float x, const float y, const float z) {
+inline static void
+XrMatrix4x4f_CreateTranslation(XrMatrix4x4f *result, const float x, const float y, const float z) {
     result->m[0] = 1.0f;
     result->m[1] = 0.0f;
     result->m[2] = 0.0f;
@@ -380,8 +406,9 @@ inline static void XrMatrix4x4f_CreateTranslation(XrMatrix4x4f* result, const fl
 
 // Creates a rotation matrix.
 // If -Z=forward, +Y=up, +X=right, then degreesX=pitch, degreesY=yaw, degreesZ=roll.
-inline static void XrMatrix4x4f_CreateRotation(XrMatrix4x4f* result, const float degreesX, const float degreesY,
-                                               const float degreesZ) {
+inline static void
+XrMatrix4x4f_CreateRotation(XrMatrix4x4f *result, const float degreesX, const float degreesY,
+                            const float degreesZ) {
     const float sinX = sinf(degreesX * (MATH_PI / 180.0f));
     const float cosX = cosf(degreesX * (MATH_PI / 180.0f));
     const XrMatrix4x4f rotationX = {{1, 0, 0, 0, 0, cosX, sinX, 0, 0, -sinX, cosX, 0, 0, 0, 0, 1}};
@@ -397,7 +424,8 @@ inline static void XrMatrix4x4f_CreateRotation(XrMatrix4x4f* result, const float
 }
 
 // Creates a scale matrix.
-inline static void XrMatrix4x4f_CreateScale(XrMatrix4x4f* result, const float x, const float y, const float z) {
+inline static void
+XrMatrix4x4f_CreateScale(XrMatrix4x4f *result, const float x, const float y, const float z) {
     result->m[0] = x;
     result->m[1] = 0.0f;
     result->m[2] = 0.0f;
@@ -417,7 +445,8 @@ inline static void XrMatrix4x4f_CreateScale(XrMatrix4x4f* result, const float x,
 }
 
 // Creates a matrix from a quaternion.
-inline static void XrMatrix4x4f_CreateFromQuaternion(XrMatrix4x4f* result, const XrQuaternionf* quat) {
+inline static void
+XrMatrix4x4f_CreateFromQuaternion(XrMatrix4x4f *result, const XrQuaternionf *quat) {
     const float x2 = quat->x + quat->x;
     const float y2 = quat->y + quat->y;
     const float z2 = quat->z + quat->z;
@@ -455,8 +484,10 @@ inline static void XrMatrix4x4f_CreateFromQuaternion(XrMatrix4x4f* result, const
 }
 
 // Creates a combined translation(rotation(scale(object))) matrix.
-inline static void XrMatrix4x4f_CreateTranslationRotationScale(XrMatrix4x4f* result, const XrVector3f* translation,
-                                                               const XrQuaternionf* rotation, const XrVector3f* scale) {
+inline static void
+XrMatrix4x4f_CreateTranslationRotationScale(XrMatrix4x4f *result, const XrVector3f *translation,
+                                            const XrQuaternionf *rotation,
+                                            const XrVector3f *scale) {
     XrMatrix4x4f scaleMatrix;
     XrMatrix4x4f_CreateScale(&scaleMatrix, scale->x, scale->y, scale->z);
 
@@ -464,7 +495,8 @@ inline static void XrMatrix4x4f_CreateTranslationRotationScale(XrMatrix4x4f* res
     XrMatrix4x4f_CreateFromQuaternion(&rotationMatrix, rotation);
 
     XrMatrix4x4f translationMatrix;
-    XrMatrix4x4f_CreateTranslation(&translationMatrix, translation->x, translation->y, translation->z);
+    XrMatrix4x4f_CreateTranslation(&translationMatrix, translation->x, translation->y,
+                                   translation->z);
 
     XrMatrix4x4f combinedMatrix;
     XrMatrix4x4f_Multiply(&combinedMatrix, &rotationMatrix, &scaleMatrix);
@@ -479,18 +511,23 @@ inline static void XrMatrix4x4f_CreateTranslationRotationScale(XrMatrix4x4f* res
 //              "Tightening the Precision of Perspective Rendering"
 //              Paul Upchurch, Mathieu Desbrun
 //              Journal of Graphics Tools, Volume 16, Issue 1, 2012
-inline static void XrMatrix4x4f_CreateProjection(XrMatrix4x4f* result, GraphicsAPI graphicsApi, const float tanAngleLeft,
-                                                 const float tanAngleRight, const float tanAngleUp, float const tanAngleDown,
+inline static void XrMatrix4x4f_CreateProjection(XrMatrix4x4f *result, GraphicsAPI graphicsApi,
+                                                 const float tanAngleLeft,
+                                                 const float tanAngleRight, const float tanAngleUp,
+                                                 float const tanAngleDown,
                                                  const float nearZ, const float farZ) {
     const float tanAngleWidth = tanAngleRight - tanAngleLeft;
 
     // Set to tanAngleDown - tanAngleUp for a clip space with positive Y down (Vulkan).
     // Set to tanAngleUp - tanAngleDown for a clip space with positive Y up (OpenGL / D3D / Metal).
-    const float tanAngleHeight = graphicsApi == GRAPHICS_VULKAN ? (tanAngleDown - tanAngleUp) : (tanAngleUp - tanAngleDown);
+    const float tanAngleHeight =
+            graphicsApi == GRAPHICS_VULKAN ? (tanAngleDown - tanAngleUp) : (tanAngleUp -
+                                                                            tanAngleDown);
 
     // Set to nearZ for a [-1,1] Z clip space (OpenGL / OpenGL ES).
     // Set to zero for a [0,1] Z clip space (Vulkan / D3D / Metal).
-    const float offsetZ = (graphicsApi == GRAPHICS_OPENGL || graphicsApi == GRAPHICS_OPENGL_ES) ? nearZ : 0;
+    const float offsetZ = (graphicsApi == GRAPHICS_OPENGL || graphicsApi == GRAPHICS_OPENGL_ES)
+                          ? nearZ : 0;
 
     if (farZ <= nearZ) {
         // place the far plane at infinity
@@ -538,22 +575,28 @@ inline static void XrMatrix4x4f_CreateProjection(XrMatrix4x4f* result, GraphicsA
 }
 
 // Creates a projection matrix based on the specified FOV.
-inline static void XrMatrix4x4f_CreateProjectionFov(XrMatrix4x4f* result, GraphicsAPI graphicsApi, const XrFovf fov,
-                                                    const float nearZ, const float farZ) {
+inline static void
+XrMatrix4x4f_CreateProjectionFov(XrMatrix4x4f *result, GraphicsAPI graphicsApi, const XrFovf fov,
+                                 const float nearZ, const float farZ) {
     const float tanLeft = tanf(fov.angleLeft);
     const float tanRight = tanf(fov.angleRight);
 
     const float tanDown = tanf(fov.angleDown);
     const float tanUp = tanf(fov.angleUp);
 
-    XrMatrix4x4f_CreateProjection(result, graphicsApi, tanLeft, tanRight, tanUp, tanDown, nearZ, farZ);
+    XrMatrix4x4f_CreateProjection(result, graphicsApi, tanLeft, tanRight, tanUp, tanDown, nearZ,
+                                  farZ);
 }
 
 // Creates a matrix that transforms the -1 to 1 cube to cover the given 'mins' and 'maxs' transformed with the given 'matrix'.
-inline static void XrMatrix4x4f_CreateOffsetScaleForBounds(XrMatrix4x4f* result, const XrMatrix4x4f* matrix, const XrVector3f* mins,
-                                                           const XrVector3f* maxs) {
-    const XrVector3f offset = {(maxs->x + mins->x) * 0.5f, (maxs->y + mins->y) * 0.5f, (maxs->z + mins->z) * 0.5f};
-    const XrVector3f scale = {(maxs->x - mins->x) * 0.5f, (maxs->y - mins->y) * 0.5f, (maxs->z - mins->z) * 0.5f};
+inline static void
+XrMatrix4x4f_CreateOffsetScaleForBounds(XrMatrix4x4f *result, const XrMatrix4x4f *matrix,
+                                        const XrVector3f *mins,
+                                        const XrVector3f *maxs) {
+    const XrVector3f offset = {(maxs->x + mins->x) * 0.5f, (maxs->y + mins->y) * 0.5f,
+                               (maxs->z + mins->z) * 0.5f};
+    const XrVector3f scale = {(maxs->x - mins->x) * 0.5f, (maxs->y - mins->y) * 0.5f,
+                              (maxs->z - mins->z) * 0.5f};
 
     result->m[0] = matrix->m[0] * scale.x;
     result->m[1] = matrix->m[1] * scale.x;
@@ -570,28 +613,35 @@ inline static void XrMatrix4x4f_CreateOffsetScaleForBounds(XrMatrix4x4f* result,
     result->m[10] = matrix->m[10] * scale.z;
     result->m[11] = matrix->m[11] * scale.z;
 
-    result->m[12] = matrix->m[12] + matrix->m[0] * offset.x + matrix->m[4] * offset.y + matrix->m[8] * offset.z;
-    result->m[13] = matrix->m[13] + matrix->m[1] * offset.x + matrix->m[5] * offset.y + matrix->m[9] * offset.z;
-    result->m[14] = matrix->m[14] + matrix->m[2] * offset.x + matrix->m[6] * offset.y + matrix->m[10] * offset.z;
-    result->m[15] = matrix->m[15] + matrix->m[3] * offset.x + matrix->m[7] * offset.y + matrix->m[11] * offset.z;
+    result->m[12] = matrix->m[12] + matrix->m[0] * offset.x + matrix->m[4] * offset.y +
+                    matrix->m[8] * offset.z;
+    result->m[13] = matrix->m[13] + matrix->m[1] * offset.x + matrix->m[5] * offset.y +
+                    matrix->m[9] * offset.z;
+    result->m[14] = matrix->m[14] + matrix->m[2] * offset.x + matrix->m[6] * offset.y +
+                    matrix->m[10] * offset.z;
+    result->m[15] = matrix->m[15] + matrix->m[3] * offset.x + matrix->m[7] * offset.y +
+                    matrix->m[11] * offset.z;
 }
 
 // Returns true if the given matrix is affine.
-inline static bool XrMatrix4x4f_IsAffine(const XrMatrix4x4f* matrix, const float epsilon) {
-    return fabsf(matrix->m[3]) <= epsilon && fabsf(matrix->m[7]) <= epsilon && fabsf(matrix->m[11]) <= epsilon &&
+inline static bool XrMatrix4x4f_IsAffine(const XrMatrix4x4f *matrix, const float epsilon) {
+    return fabsf(matrix->m[3]) <= epsilon && fabsf(matrix->m[7]) <= epsilon &&
+           fabsf(matrix->m[11]) <= epsilon &&
            fabsf(matrix->m[15] - 1.0f) <= epsilon;
 }
 
 // Returns true if the given matrix is orthogonal.
-inline static bool XrMatrix4x4f_IsOrthogonal(const XrMatrix4x4f* matrix, const float epsilon) {
+inline static bool XrMatrix4x4f_IsOrthogonal(const XrMatrix4x4f *matrix, const float epsilon) {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             if (i != j) {
-                if (fabsf(matrix->m[4 * i + 0] * matrix->m[4 * j + 0] + matrix->m[4 * i + 1] * matrix->m[4 * j + 1] +
+                if (fabsf(matrix->m[4 * i + 0] * matrix->m[4 * j + 0] +
+                          matrix->m[4 * i + 1] * matrix->m[4 * j + 1] +
                           matrix->m[4 * i + 2] * matrix->m[4 * j + 2]) > epsilon) {
                     return false;
                 }
-                if (fabsf(matrix->m[4 * 0 + i] * matrix->m[4 * 0 + j] + matrix->m[4 * 1 + i] * matrix->m[4 * 1 + j] +
+                if (fabsf(matrix->m[4 * 0 + i] * matrix->m[4 * 0 + j] +
+                          matrix->m[4 * 1 + i] * matrix->m[4 * 1 + j] +
                           matrix->m[4 * 2 + i] * matrix->m[4 * 2 + j]) > epsilon) {
                     return false;
                 }
@@ -602,15 +652,17 @@ inline static bool XrMatrix4x4f_IsOrthogonal(const XrMatrix4x4f* matrix, const f
 }
 
 // Returns true if the given matrix is orthonormal.
-inline static bool XrMatrix4x4f_IsOrthonormal(const XrMatrix4x4f* matrix, const float epsilon) {
+inline static bool XrMatrix4x4f_IsOrthonormal(const XrMatrix4x4f *matrix, const float epsilon) {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             const float kd = (i == j) ? 1.0f : 0.0f;  // Kronecker delta
-            if (fabsf(kd - (matrix->m[4 * i + 0] * matrix->m[4 * j + 0] + matrix->m[4 * i + 1] * matrix->m[4 * j + 1] +
+            if (fabsf(kd - (matrix->m[4 * i + 0] * matrix->m[4 * j + 0] +
+                            matrix->m[4 * i + 1] * matrix->m[4 * j + 1] +
                             matrix->m[4 * i + 2] * matrix->m[4 * j + 2])) > epsilon) {
                 return false;
             }
-            if (fabsf(kd - (matrix->m[4 * 0 + i] * matrix->m[4 * 0 + j] + matrix->m[4 * 1 + i] * matrix->m[4 * 1 + j] +
+            if (fabsf(kd - (matrix->m[4 * 0 + i] * matrix->m[4 * 0 + j] +
+                            matrix->m[4 * 1 + i] * matrix->m[4 * 1 + j] +
                             matrix->m[4 * 2 + i] * matrix->m[4 * 2 + j])) > epsilon) {
                 return false;
             }
@@ -620,12 +672,12 @@ inline static bool XrMatrix4x4f_IsOrthonormal(const XrMatrix4x4f* matrix, const 
 }
 
 // Returns true if the given matrix is a rigid body transform.
-inline static bool XrMatrix4x4f_IsRigidBody(const XrMatrix4x4f* matrix, const float epsilon) {
+inline static bool XrMatrix4x4f_IsRigidBody(const XrMatrix4x4f *matrix, const float epsilon) {
     return XrMatrix4x4f_IsAffine(matrix, epsilon) && XrMatrix4x4f_IsOrthonormal(matrix, epsilon);
 }
 
 // Get the translation from a combined translation(rotation(scale(object))) matrix.
-inline static void XrMatrix4x4f_GetTranslation(XrVector3f* result, const XrMatrix4x4f* src) {
+inline static void XrMatrix4x4f_GetTranslation(XrVector3f *result, const XrMatrix4x4f *src) {
     assert(XrMatrix4x4f_IsAffine(src, 1e-4f));
     assert(XrMatrix4x4f_IsOrthogonal(src, 1e-4f));
 
@@ -635,13 +687,16 @@ inline static void XrMatrix4x4f_GetTranslation(XrVector3f* result, const XrMatri
 }
 
 // Get the rotation from a combined translation(rotation(scale(object))) matrix.
-inline static void XrMatrix4x4f_GetRotation(XrQuaternionf* result, const XrMatrix4x4f* src) {
+inline static void XrMatrix4x4f_GetRotation(XrQuaternionf *result, const XrMatrix4x4f *src) {
     assert(XrMatrix4x4f_IsAffine(src, 1e-4f));
     assert(XrMatrix4x4f_IsOrthogonal(src, 1e-4f));
 
-    const float rcpScaleX = XrRcpSqrt(src->m[0] * src->m[0] + src->m[1] * src->m[1] + src->m[2] * src->m[2]);
-    const float rcpScaleY = XrRcpSqrt(src->m[4] * src->m[4] + src->m[5] * src->m[5] + src->m[6] * src->m[6]);
-    const float rcpScaleZ = XrRcpSqrt(src->m[8] * src->m[8] + src->m[9] * src->m[9] + src->m[10] * src->m[10]);
+    const float rcpScaleX = XrRcpSqrt(
+            src->m[0] * src->m[0] + src->m[1] * src->m[1] + src->m[2] * src->m[2]);
+    const float rcpScaleY = XrRcpSqrt(
+            src->m[4] * src->m[4] + src->m[5] * src->m[5] + src->m[6] * src->m[6]);
+    const float rcpScaleZ = XrRcpSqrt(
+            src->m[8] * src->m[8] + src->m[9] * src->m[9] + src->m[10] * src->m[10]);
     const float m[9] = {src->m[0] * rcpScaleX, src->m[1] * rcpScaleX, src->m[2] * rcpScaleX,
                         src->m[4] * rcpScaleY, src->m[5] * rcpScaleY, src->m[6] * rcpScaleY,
                         src->m[8] * rcpScaleZ, src->m[9] * rcpScaleZ, src->m[10] * rcpScaleZ};
@@ -677,7 +732,7 @@ inline static void XrMatrix4x4f_GetRotation(XrQuaternionf* result, const XrMatri
 }
 
 // Get the scale from a combined translation(rotation(scale(object))) matrix.
-inline static void XrMatrix4x4f_GetScale(XrVector3f* result, const XrMatrix4x4f* src) {
+inline static void XrMatrix4x4f_GetScale(XrVector3f *result, const XrMatrix4x4f *src) {
     assert(XrMatrix4x4f_IsAffine(src, 1e-4f));
     assert(XrMatrix4x4f_IsOrthogonal(src, 1e-4f));
 
@@ -687,7 +742,8 @@ inline static void XrMatrix4x4f_GetScale(XrVector3f* result, const XrMatrix4x4f*
 }
 
 // Transforms a 3D vector.
-inline static void XrMatrix4x4f_TransformVector3f(XrVector3f* result, const XrMatrix4x4f* m, const XrVector3f* v) {
+inline static void
+XrMatrix4x4f_TransformVector3f(XrVector3f *result, const XrMatrix4x4f *m, const XrVector3f *v) {
     const float w = m->m[3] * v->x + m->m[7] * v->y + m->m[11] * v->z + m->m[15];
     const float rcpW = 1.0f / w;
     result->x = (m->m[0] * v->x + m->m[4] * v->y + m->m[8] * v->z + m->m[12]) * rcpW;
@@ -696,7 +752,8 @@ inline static void XrMatrix4x4f_TransformVector3f(XrVector3f* result, const XrMa
 }
 
 // Transforms a 4D vector.
-inline static void XrMatrix4x4f_TransformVector4f(XrVector4f* result, const XrMatrix4x4f* m, const XrVector4f* v) {
+inline static void
+XrMatrix4x4f_TransformVector4f(XrVector4f *result, const XrMatrix4x4f *m, const XrVector4f *v) {
     result->x = m->m[0] * v->x + m->m[4] * v->y + m->m[8] * v->z + m->m[12] * v->w;
     result->y = m->m[1] * v->x + m->m[5] * v->y + m->m[9] * v->z + m->m[13] * v->w;
     result->z = m->m[2] * v->x + m->m[6] * v->y + m->m[10] * v->z + m->m[14] * v->w;
@@ -704,32 +761,43 @@ inline static void XrMatrix4x4f_TransformVector4f(XrVector4f* result, const XrMa
 }
 
 // Transforms the 'mins' and 'maxs' bounds with the given 'matrix'.
-inline static void XrMatrix4x4f_TransformBounds(XrVector3f* resultMins, XrVector3f* resultMaxs, const XrMatrix4x4f* matrix,
-                                                const XrVector3f* mins, const XrVector3f* maxs) {
+inline static void XrMatrix4x4f_TransformBounds(XrVector3f *resultMins, XrVector3f *resultMaxs,
+                                                const XrMatrix4x4f *matrix,
+                                                const XrVector3f *mins, const XrVector3f *maxs) {
     assert(XrMatrix4x4f_IsAffine(matrix, 1e-4f));
 
-    const XrVector3f center = {(mins->x + maxs->x) * 0.5f, (mins->y + maxs->y) * 0.5f, (mins->z + maxs->z) * 0.5f};
+    const XrVector3f center = {(mins->x + maxs->x) * 0.5f, (mins->y + maxs->y) * 0.5f,
+                               (mins->z + maxs->z) * 0.5f};
     const XrVector3f extents = {maxs->x - center.x, maxs->y - center.y, maxs->z - center.z};
-    const XrVector3f newCenter = {matrix->m[0] * center.x + matrix->m[4] * center.y + matrix->m[8] * center.z + matrix->m[12],
-                                  matrix->m[1] * center.x + matrix->m[5] * center.y + matrix->m[9] * center.z + matrix->m[13],
-                                  matrix->m[2] * center.x + matrix->m[6] * center.y + matrix->m[10] * center.z + matrix->m[14]};
+    const XrVector3f newCenter = {
+            matrix->m[0] * center.x + matrix->m[4] * center.y + matrix->m[8] * center.z +
+            matrix->m[12],
+            matrix->m[1] * center.x + matrix->m[5] * center.y + matrix->m[9] * center.z +
+            matrix->m[13],
+            matrix->m[2] * center.x + matrix->m[6] * center.y + matrix->m[10] * center.z +
+            matrix->m[14]};
     const XrVector3f newExtents = {
-        fabsf(extents.x * matrix->m[0]) + fabsf(extents.y * matrix->m[4]) + fabsf(extents.z * matrix->m[8]),
-        fabsf(extents.x * matrix->m[1]) + fabsf(extents.y * matrix->m[5]) + fabsf(extents.z * matrix->m[9]),
-        fabsf(extents.x * matrix->m[2]) + fabsf(extents.y * matrix->m[6]) + fabsf(extents.z * matrix->m[10])};
+            fabsf(extents.x * matrix->m[0]) + fabsf(extents.y * matrix->m[4]) +
+            fabsf(extents.z * matrix->m[8]),
+            fabsf(extents.x * matrix->m[1]) + fabsf(extents.y * matrix->m[5]) +
+            fabsf(extents.z * matrix->m[9]),
+            fabsf(extents.x * matrix->m[2]) + fabsf(extents.y * matrix->m[6]) +
+            fabsf(extents.z * matrix->m[10])};
     XrVector3f_Sub(resultMins, &newCenter, &newExtents);
     XrVector3f_Add(resultMaxs, &newCenter, &newExtents);
 }
 
 // Returns true if the 'mins' and 'maxs' bounds is completely off to one side of the projection matrix.
-inline static bool XrMatrix4x4f_CullBounds(const XrMatrix4x4f* mvp, const XrVector3f* mins, const XrVector3f* maxs) {
+inline static bool
+XrMatrix4x4f_CullBounds(const XrMatrix4x4f *mvp, const XrVector3f *mins, const XrVector3f *maxs) {
     if (maxs->x <= mins->x && maxs->y <= mins->y && maxs->z <= mins->z) {
         return false;
     }
 
     XrVector4f c[8];
     for (int i = 0; i < 8; i++) {
-        const XrVector4f corner = {(i & 1) != 0 ? maxs->x : mins->x, (i & 2) != 0 ? maxs->y : mins->y,
+        const XrVector4f corner = {(i & 1) != 0 ? maxs->x : mins->x,
+                                   (i & 2) != 0 ? maxs->y : mins->y,
                                    (i & 4) != 0 ? maxs->z : mins->z, 1.0f};
         XrMatrix4x4f_TransformVector4f(&c[i], mvp, &corner);
     }
