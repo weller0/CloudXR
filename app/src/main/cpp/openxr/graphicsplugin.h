@@ -21,6 +21,7 @@ struct IGraphicsPlugin {
     virtual std::vector<std::string> GetInstanceExtensions() const = 0;
 
     // Create an instance of this graphics api for the provided instance and systemId.
+    // 创建EGL、创建OpenGL ES shader、创建VAO\VBO
     virtual void InitializeDevice(XrInstance instance, XrSystemId systemId) = 0;
 
     // Select the preferred swapchain format from the list of available formats.

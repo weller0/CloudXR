@@ -331,7 +331,6 @@ CGLError CGLUpdateContext(CGLContextObj ctx);
 #include <sys/prctl.h>                  // for prctl( PR_SET_NAME )
 #include <sys/stat.h>                   // for gettid
 #include <sys/syscall.h>                // for syscall
-#include <android/log.h>                // for __android_log_print
 #include <android/input.h>              // for AKEYCODE_ etc.
 #include <android/window.h>             // for AWINDOW_FLAG_KEEP_SCREEN_ON
 #include <android/native_window_jni.h>  // for native window JNI

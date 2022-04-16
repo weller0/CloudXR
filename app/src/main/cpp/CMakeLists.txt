@@ -25,13 +25,13 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(cloudxr-native
         SHARED
+        GraphicRender.cpp
         openxr/gfxwrapper_opengl.c
-        openxr/logger.cpp
         openxr/graphicsplugin_opengles.cpp
+        openxr/logger.cpp
         openxr/platformplugin_android.cpp
         openxr/openxr_program.cpp
         GraphicRender.cpp
-        EGLHelper.cpp
         main.cpp)
 
 target_link_libraries(cloudxr-native

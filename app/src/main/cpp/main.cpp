@@ -1,7 +1,5 @@
 //BEGIN_INCLUDE(all)
 #include <android_native_app_glue.h>
-#include "GraphicRender.h"
-#include "EGLHelper.h"
 #include "log.h"
 
 ANativeWindow *NativeWindow;
@@ -76,7 +74,6 @@ void android_main(struct android_app *state) {
                                                                       graphicsPlugin);
         // Initialize the loader for this platform
         PFN_xrInitializeLoaderKHR initializeLoader = nullptr;
-        ALOGD("111 XR_SUCCEEDED 1111");
         if (XR_SUCCEEDED(
                 xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR",
                                       (PFN_xrVoidFunction *) (&initializeLoader)))) {

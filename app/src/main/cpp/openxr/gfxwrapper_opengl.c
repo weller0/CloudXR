@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 #include "gfxwrapper_opengl.h"
+#include "log.h"
 
 /*
 ================================================================================================================================
@@ -31,7 +32,7 @@ static void Print(const char *format, ...) {
     vsnprintf(buffer, 4096, format, args);
     va_end(args);
 
-    __android_log_print(ANDROID_LOG_VERBOSE, "atw", "%s", buffer);
+    ALOGD("%s", buffer);
 }
 
 static void Error(const char *format, ...) {
@@ -41,7 +42,7 @@ static void Error(const char *format, ...) {
     vsnprintf(buffer, 4096, format, args);
     va_end(args);
 
-    __android_log_print(ANDROID_LOG_ERROR, "atw", "%s", buffer);
+    ALOGE("%s", buffer);
     // Without exiting, the application will likely crash.
     if (format != NULL) {
         exit(0);

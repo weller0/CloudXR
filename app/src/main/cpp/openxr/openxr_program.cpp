@@ -1065,16 +1065,16 @@ namespace {
             res = xrLocateViews(m_session, &viewLocateInfo, &viewState, viewCapacityInput,
                                 &viewCountOutput, m_views.data());
             CHECK_XRRESULT(res, "xrLocateViews");
-            for (XrView xrView : m_views) {
-                Log::Write(Log::Level::Info,
-                           Fmt("views fov[%f,%f,%f,%f], pos:[%f,%f,%f,%f],[%f,%f,%f]",
-                               xrView.fov.angleLeft, xrView.fov.angleRight,
-                               xrView.fov.angleUp, xrView.fov.angleDown,
-                               xrView.pose.orientation.x, xrView.pose.orientation.y,
-                               xrView.pose.orientation.z, xrView.pose.orientation.w,
-                               xrView.pose.position.x, xrView.pose.position.y,
-                               xrView.pose.position.z));
-            }
+//            for (XrView xrView : m_views) {
+//                Log::Write(Log::Level::Info,
+//                           Fmt("views fov[%f,%f,%f,%f], pos:[%f,%f,%f,%f],[%f,%f,%f]",
+//                               xrView.fov.angleLeft, xrView.fov.angleRight,
+//                               xrView.fov.angleUp, xrView.fov.angleDown,
+//                               xrView.pose.orientation.x, xrView.pose.orientation.y,
+//                               xrView.pose.orientation.z, xrView.pose.orientation.w,
+//                               xrView.pose.position.x, xrView.pose.position.y,
+//                               xrView.pose.position.z));
+//            }
             if ((viewState.viewStateFlags & XR_VIEW_STATE_POSITION_VALID_BIT) == 0 ||
                 (viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_VALID_BIT) == 0) {
                 return false;  // There is no valid tracking poses for the views.
@@ -1119,14 +1119,14 @@ namespace {
                         (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) !=
                         0) {
                         float scale = 0.1f * m_input.handScale[hand];
-                        Log::Write(Log::Level::Info,
-                                   Fmt("XR_TYPE_ACTION_SPACE_CREATE_INFO pos:{(%f,%f,%f,%f),(%f,%f,%f)}",
-                                       spaceLocation.pose.orientation.x,
-                                       spaceLocation.pose.orientation.y,
-                                       spaceLocation.pose.orientation.z,
-                                       spaceLocation.pose.orientation.w,
-                                       spaceLocation.pose.position.x, spaceLocation.pose.position.y,
-                                       spaceLocation.pose.position.z));
+//                        Log::Write(Log::Level::Info,
+//                                   Fmt("XR_TYPE_ACTION_SPACE_CREATE_INFO pos:{(%f,%f,%f,%f),(%f,%f,%f)}",
+//                                       spaceLocation.pose.orientation.x,
+//                                       spaceLocation.pose.orientation.y,
+//                                       spaceLocation.pose.orientation.z,
+//                                       spaceLocation.pose.orientation.w,
+//                                       spaceLocation.pose.position.x, spaceLocation.pose.position.y,
+//                                       spaceLocation.pose.position.z));
                         cubes.push_back(Cube{spaceLocation.pose, {scale, scale, scale}});
                     }
                 } else {
