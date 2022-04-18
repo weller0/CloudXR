@@ -1086,61 +1086,6 @@ namespace {
 
             projectionLayerViews.resize(viewCountOutput);
 
-            // For each locatable space that we want to visualize, render a 25cm cube.
-            std::vector<Cube> cubes;
-
-            for (XrSpace visualizedSpace : m_visualizedSpaces) {
-                XrSpaceLocation spaceLocation{XR_TYPE_SPACE_LOCATION};
-                res = xrLocateSpace(visualizedSpace, m_appSpace, predictedDisplayTime,
-                                    &spaceLocation);
-                CHECK_XRRESULT(res, "xrLocateSpace");
-                if (XR_UNQUALIFIED_SUCCESS(res)) {
-                    if ((spaceLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
-                        (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) !=
-                        0) {
-                        cubes.push_back(Cube{spaceLocation.pose, {0.25f, 0.25f, 0.25f}});
-                    }
-                } else {
-                    Log::Write(Log::Level::Verbose,
-                               Fmt("Unable to locate a visualized reference space in app space: %d",
-                                   res));
-                }
-            }
-
-            // Render a 10cm cube scaled by grabAction for each hand. Note renderHand will only be
-            // true when the application has focus.
-            for (auto hand : {Side::LEFT, Side::RIGHT}) {
-                XrSpaceLocation spaceLocation{XR_TYPE_SPACE_LOCATION};
-                res = xrLocateSpace(m_input.handSpace[hand], m_appSpace, predictedDisplayTime,
-                                    &spaceLocation);
-                CHECK_XRRESULT(res, "xrLocateSpace");
-                if (XR_UNQUALIFIED_SUCCESS(res)) {
-                    if ((spaceLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
-                        (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) !=
-                        0) {
-                        float scale = 0.1f * m_input.handScale[hand];
-//                        Log::Write(Log::Level::Info,
-//                                   Fmt("XR_TYPE_ACTION_SPACE_CREATE_INFO pos:{(%f,%f,%f,%f),(%f,%f,%f)}",
-//                                       spaceLocation.pose.orientation.x,
-//                                       spaceLocation.pose.orientation.y,
-//                                       spaceLocation.pose.orientation.z,
-//                                       spaceLocation.pose.orientation.w,
-//                                       spaceLocation.pose.position.x, spaceLocation.pose.position.y,
-//                                       spaceLocation.pose.position.z));
-                        cubes.push_back(Cube{spaceLocation.pose, {scale, scale, scale}});
-                    }
-                } else {
-                    // Tracking loss is expected when the hand is not active so only log a message
-                    // if the hand is active.
-                    if (m_input.handActive[hand] == XR_TRUE) {
-                        const char *handName[] = {"left", "right"};
-                        Log::Write(Log::Level::Verbose,
-                                   Fmt("Unable to locate %s hand action space in app space: %d",
-                                       handName[hand], res));
-                    }
-                }
-            }
-
             // Render view to the appropriate part of the swapchain image.
             for (uint32_t i = 0; i < viewCountOutput; i++) {
                 // Each view has a separate swapchain which is acquired, rendered to, and released.
@@ -1165,8 +1110,8 @@ namespace {
                                                                      viewSwapchain.height};
 
                 const XrSwapchainImageBaseHeader *const swapchainImage = m_swapchainImages[viewSwapchain.handle][swapchainImageIndex];
-                m_graphicsPlugin->RenderView(projectionLayerViews[i], swapchainImage,
-                                             m_colorSwapchainFormat, cubes);
+                m_graphicsPlugin->RenderView(i, projectionLayerViews[i],swapchainImage,
+                                             m_colorSwapchainFormat);
 
                 XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
                 CHECK_XRCMD(xrReleaseSwapchainImage(viewSwapchain.handle, &releaseInfo));

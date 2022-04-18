@@ -16,20 +16,18 @@ namespace ssnwt {
         createTexture();
     }
 
-    void GraphicRender::draw(const XrPosef pose) {
-        clear();
-
+    void GraphicRender::draw(const uint32_t eye, const XrPosef pose) {
         glUseProgram(mProgram);
+        clear();
         checkGlError("glUseProgram");
-
-        glBindTexture(GL_TEXTURE_2D, mTextureIDL);
-        draw(PositionVertexL, TextureVertex);
-
-        glBindTexture(GL_TEXTURE_2D, mTextureIDR);
-        draw(PositionVertexR, TextureVertex);
-
+        if (eye == 0) {
+            glBindTexture(GL_TEXTURE_2D, mTextureIDL);
+            draw(PositionVertexL, TextureVertex);
+        } else {
+            glBindTexture(GL_TEXTURE_2D, mTextureIDR);
+            draw(PositionVertexR, TextureVertex);
+        }
         glUseProgram(0);
-
         drawFbo();
     }
 

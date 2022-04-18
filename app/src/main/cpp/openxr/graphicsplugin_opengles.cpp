@@ -138,9 +138,9 @@ namespace {
             return swapchainImageBase;
         }
 
-        void RenderView(const XrCompositionLayerProjectionView &layerView,
+        void RenderView(const uint32_t eye, const XrCompositionLayerProjectionView &layerView,
                         const XrSwapchainImageBaseHeader *swapchainImage,
-                        int64_t swapchainFormat, const std::vector<Cube> &cubes) override {
+                        int64_t swapchainFormat) override {
             CHECK(layerView.subImage.imageArrayIndex == 0);  // Texture arrays not supported.
             UNUSED_PARM(swapchainFormat);                    // Not used in this function for now.
 
@@ -171,7 +171,7 @@ namespace {
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture,
                                    0);
 
-            m_graphicRender.draw(layerView.pose);
+            m_graphicRender.draw(eye, layerView.pose);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }

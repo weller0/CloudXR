@@ -28,15 +28,15 @@ namespace ssnwt {
     constexpr float PositionVertexL[] = {
             // X, Y, Z
             -1.0f, 1.0f, 0,
-            0.0f, 1.0f, 0,
+            1.0f, 1.0f, 0,
             -1.0f, -1.0f, 0,
-            0.0f, -1.0f, 0,
+            1.0f, -1.0f, 0,
     };
     constexpr float PositionVertexR[] = {
             // X, Y, Z
-            0.0f, 1.0f, 0,
+            -1.0f, 1.0f, 0,
             1.0f, 1.0f, 0,
-            0.0f, -1.0f, 0,
+            -1.0f, -1.0f, 0,
             1.0f, -1.0f, 0,
     };
     constexpr float TextureVertex[] = {
@@ -54,7 +54,7 @@ namespace ssnwt {
 
         void initialize();
 
-        void draw(const XrPosef pose);
+        void draw(const uint32_t eye, const XrPosef pose);
 
     private:
         void createTexture();
