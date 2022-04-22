@@ -31,7 +31,6 @@ add_library(cloudxr-native
         openxr/logger.cpp
         openxr/platformplugin_android.cpp
         openxr/openxr_program.cpp
-        GraphicRender.cpp
         main.cpp)
 
 target_link_libraries(cloudxr-native

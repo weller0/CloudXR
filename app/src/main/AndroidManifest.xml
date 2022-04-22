@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ssnwt.cloudxr">
 
+    <uses-feature
+        android:name="android.software.vr.mode"
+        android:required="true" />
+
     <!-- This .apk has no Java code itself, so set hasCode to false. -->
     <application
         android:allowBackup="true"
@@ -28,7 +32,9 @@
             </intent-filter>
         </activity>
 
-        <meta-data android:name="invision.display_mode" android:value="vr"/>
+        <meta-data
+            android:name="invision.display_mode"
+            android:value="vr" />
     </application>
 
 </manifest>

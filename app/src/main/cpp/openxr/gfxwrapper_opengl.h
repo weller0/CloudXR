@@ -393,11 +393,7 @@ Common defines
 
 #define UNUSED_PARM(x) \
     { (void)(x); }
-#define ARRAY_SIZE(a) (sizeof((a)) / sizeof((a)[0]))
-#define OFFSETOF_MEMBER(type, member) (size_t) & ((type *)0)->member
-#define SIZEOF_MEMBER(type, member) sizeof(((type *)0)->member)
 #define BIT(x) (1 << (x))
-#define ROUNDUP(x, granularity) (((x) + (granularity)-1) & ~((granularity)-1))
 #ifndef MAX
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #endif
@@ -406,15 +402,6 @@ Common defines
 #endif
 #define CLAMP(x, min, max) (((x) < (min)) ? (min) : (((x) > (max)) ? (max) : (x)))
 #define STRINGIFY_EXPANDED(a) #a
-#define STRINGIFY(a) STRINGIFY_EXPANDED(a)
-
-#define APPLICATION_NAME "OpenGL SI"
-#define WINDOW_TITLE "OpenGL SI"
-
-#define PROGRAM(name) name##GLSL
-
-#define GLSL_EXTENSIONS "#extension GL_EXT_shader_io_blocks : enable\n"
-#define GL_FINISH_SYNC 1
 
 #if defined(OS_ANDROID)
 #define ES_HIGHP "highp"  // GLSL "310 es" requires a precision qualifier on a image2D
@@ -628,52 +615,13 @@ extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC glRenderbufferStorageMultisamp
 
 // GL_EXT_buffer_storage without _EXT
 #if !defined(GL_BUFFER_STORAGE_FLAGS)
-#define GL_MAP_READ_BIT 0x0001                          // GL_MAP_READ_BIT_EXT
-#define GL_MAP_WRITE_BIT 0x0002                         // GL_MAP_WRITE_BIT_EXT
-#define GL_MAP_PERSISTENT_BIT 0x0040                    // GL_MAP_PERSISTENT_BIT_EXT
-#define GL_MAP_COHERENT_BIT 0x0080                      // GL_MAP_COHERENT_BIT_EXT
-#define GL_DYNAMIC_STORAGE_BIT 0x0100                   // GL_DYNAMIC_STORAGE_BIT_EXT
-#define GL_CLIENT_STORAGE_BIT 0x0200                    // GL_CLIENT_STORAGE_BIT_EXT
-#define GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT 0x00004000  // GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT_EXT
-#define GL_BUFFER_IMMUTABLE_STORAGE 0x821F              // GL_BUFFER_IMMUTABLE_STORAGE_EXT
 #define GL_BUFFER_STORAGE_FLAGS 0x8220                  // GL_BUFFER_STORAGE_FLAGS_EXT
 #endif
-
-typedef void(GL_APIENTRY *PFNGLBUFFERSTORAGEEXTPROC)(GLenum target, GLsizeiptr size,
-                                                     const void *data, GLbitfield flags);
 
 typedef void(GL_APIENTRY *PFNGLTEXSTORAGE3DMULTISAMPLEPROC)(GLenum target, GLsizei samples,
                                                             GLenum internalformat, GLsizei width,
                                                             GLsizei height, GLsizei depth,
                                                             GLboolean fixedsamplelocations);
-
-// EGL_KHR_fence_sync, GL_OES_EGL_sync, VG_KHR_EGL_sync
-extern PFNEGLCREATESYNCKHRPROC eglCreateSyncKHR;
-extern PFNEGLDESTROYSYNCKHRPROC eglDestroySyncKHR;
-extern PFNEGLCLIENTWAITSYNCKHRPROC eglClientWaitSyncKHR;
-extern PFNEGLGETSYNCATTRIBKHRPROC eglGetSyncAttribKHR;
-
-// GL_EXT_disjoint_timer_query
-extern PFNGLQUERYCOUNTEREXTPROC glQueryCounter;
-extern PFNGLGETQUERYOBJECTI64VEXTPROC glGetQueryObjecti64v;
-extern PFNGLGETQUERYOBJECTUI64VEXTPROC glGetQueryObjectui64v;
-
-// GL_EXT_buffer_storage
-extern PFNGLBUFFERSTORAGEEXTPROC glBufferStorage;
-
-// GL_OVR_multiview
-extern PFNGLFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC glFramebufferTextureMultiviewOVR;
-
-// GL_EXT_multisampled_render_to_texture
-extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC glRenderbufferStorageMultisampleEXT;
-extern PFNGLFRAMEBUFFERTEXTURE2DMULTISAMPLEEXTPROC glFramebufferTexture2DMultisampleEXT;
-
-// GL_OVR_multiview_multisampled_render_to_texture
-extern PFNGLFRAMEBUFFERTEXTUREMULTISAMPLEMULTIVIEWOVRPROC glFramebufferTextureMultisampleMultiviewOVR;
-
-#ifndef GL_ES_VERSION_3_2
-extern PFNGLTEXSTORAGE3DMULTISAMPLEPROC glTexStorage3DMultisample;
-#endif
 
 #if !defined(EGL_OPENGL_ES3_BIT)
 #define EGL_OPENGL_ES3_BIT 0x0040
@@ -729,10 +677,6 @@ typedef struct {
     int dummy;
 } ksDriverInstance;
 
-bool ksDriverInstance_Create(ksDriverInstance *instance);
-
-void ksDriverInstance_Destroy(ksDriverInstance *instance);
-
 /*
 ================================================================================================================================
 
@@ -777,36 +721,6 @@ bool ksGpuDevice_Create(ksGpuDevice *device, ksDriverInstance *instance,
 
 void ksGpuDevice_Destroy(ksGpuDevice *device);
 
-/*
-================================================================================================================================
-
-GPU context.
-
-A context encapsulates a queue that is used to submit command buffers.
-A context can only be used by a single thread.
-For optimal performance a context should only be created at load time, not at runtime.
-
-ksGpuContext
-ksGpuSurfaceColorFormat
-ksGpuSurfaceDepthFormat
-ksGpuSampleCount
-
-bool ksGpuContext_CreateShared( ksGpuContext * context, const ksGpuContext * other, const int queueIndex );
-void ksGpuContext_Destroy( ksGpuContext * context );
-void ksGpuContext_WaitIdle( ksGpuContext * context );
-void ksGpuContext_SetCurrent( ksGpuContext * context );
-void ksGpuContext_UnsetCurrent( ksGpuContext * context );
-bool ksGpuContext_CheckCurrent( ksGpuContext * context );
-
-bool ksGpuContext_CreateForSurface( ksGpuContext * context, const ksGpuDevice * device, const int queueIndex,
-                                                                                const ksGpuSurfaceColorFormat colorFormat,
-                                                                                const ksGpuSurfaceDepthFormat depthFormat,
-                                                                                const ksGpuSampleCount sampleCount,
-                                                                                ... );
-
-================================================================================================================================
-*/
-
 typedef enum {
     KS_GPU_SURFACE_COLOR_FORMAT_R5G6B5,
     KS_GPU_SURFACE_COLOR_FORMAT_B5G6R5,
@@ -832,46 +746,13 @@ typedef enum {
     KS_GPU_SAMPLE_COUNT_64 = 64,
 } ksGpuSampleCount;
 
-typedef struct ksGpuLimits {
-    size_t maxPushConstantsSize;
-    int maxSamples;
-} ksGpuLimits;
-
 typedef struct {
     const ksGpuDevice *device;
-#if defined(OS_WINDOWS)
-    HDC hDC;
-    HGLRC hGLRC;
-#elif defined(OS_LINUX_XLIB) || defined(OS_LINUX_XCB_GLX)
-    Display *xDisplay;
-    uint32_t visualid;
-    GLXFBConfig glxFBConfig;
-    GLXDrawable glxDrawable;
-    GLXContext glxContext;
-#elif defined(OS_LINUX_XCB)
-    xcb_connection_t *connection;
-    uint32_t screen_number;
-    xcb_glx_fbconfig_t fbconfigid;
-    xcb_visualid_t visualid;
-    xcb_glx_drawable_t glxDrawable;
-    xcb_glx_context_t glxContext;
-    xcb_glx_context_tag_t glxContextTag;
-#elif defined(OS_LINUX_WAYLAND)
-    EGLNativeWindowType native_window;
-    EGLDisplay display;
-    EGLContext context;
-    EGLConfig config;
-    EGLSurface mainSurface;
-#elif defined(OS_APPLE_MACOS)
-    NSOpenGLContext *nsContext;
-    CGLContextObj cglContext;
-#elif defined(OS_ANDROID)
     EGLDisplay display;
     EGLConfig config;
     EGLSurface tinySurface;
     EGLSurface mainSurface;
     EGLContext context;
-#endif
 } ksGpuContext;
 
 typedef struct {
@@ -883,57 +764,9 @@ typedef struct {
     unsigned char depthBits;
 } ksGpuSurfaceBits;
 
-bool ksGpuContext_CreateShared(ksGpuContext *context, const ksGpuContext *other, int queueIndex);
-
 void ksGpuContext_Destroy(ksGpuContext *context);
 
-void ksGpuContext_WaitIdle(ksGpuContext *context);
-
 void ksGpuContext_SetCurrent(ksGpuContext *context);
-
-void ksGpuContext_UnsetCurrent(ksGpuContext *context);
-
-bool ksGpuContext_CheckCurrent(ksGpuContext *context);
-
-/*
-================================================================================================================================
-
-GPU Window.
-
-Window with associated GPU context for GPU accelerated rendering.
-For optimal performance a window should only be created at load time, not at runtime.
-Because on some platforms the OS/drivers use thread local storage, ksGpuWindow *must* be created
-and destroyed on the same thread that will actually render to the window and swap buffers.
-
-ksGpuWindow
-ksGpuWindowEvent
-ksGpuWindowInput
-ksKeyboardKey
-ksMouseButton
-
-bool ksGpuWindow_Create( ksGpuWindow * window, ksDriverInstance * instance,
-                                                const ksGpuQueueInfo * queueInfo, const int queueIndex,
-                                                const ksGpuSurfaceColorFormat colorFormat, const ksGpuSurfaceDepthFormat
-depthFormat,
-                                                const ksGpuSampleCount sampleCount, const int width, const int height, const bool
-fullscreen );
-void ksGpuWindow_Destroy( ksGpuWindow * window );
-void ksGpuWindow_Exit( ksGpuWindow * window );
-ksGpuWindowEvent ksGpuWindow_ProcessEvents( ksGpuWindow * window );
-void ksGpuWindow_SwapInterval( ksGpuWindow * window, const int swapInterval );
-void ksGpuWindow_SwapBuffers( ksGpuWindow * window );
-ksNanoseconds ksGpuWindow_GetNextSwapTimeNanoseconds( ksGpuWindow * window );
-ksNanoseconds ksGpuWindow_GetFrameTimeNanoseconds( ksGpuWindow * window );
-
-================================================================================================================================
-*/
-
-typedef enum {
-    KS_GPU_WINDOW_EVENT_NONE,
-    KS_GPU_WINDOW_EVENT_ACTIVATED,
-    KS_GPU_WINDOW_EVENT_DEACTIVATED,
-    KS_GPU_WINDOW_EVENT_EXIT
-} ksGpuWindowEvent;
 
 typedef struct {
     bool keyInput[256];
@@ -958,63 +791,12 @@ typedef struct {
     ksGpuWindowInput input;
     ksNanoseconds lastSwapTime;
 
-#if defined(OS_WINDOWS)
-    HINSTANCE hInstance;
-    HDC hDC;
-    HWND hWnd;
-    bool windowActiveState;
-#elif defined(OS_LINUX_XLIB)
-    Display *xDisplay;
-    int xScreen;
-    Window xRoot;
-    XVisualInfo *xVisual;
-    Colormap xColormap;
-    Window xWindow;
-    int desktopWidth;
-    int desktopHeight;
-    float desktopRefreshRate;
-#elif defined(OS_LINUX_XCB) || defined(OS_LINUX_XCB_GLX)
-    Display *xDisplay;
-    xcb_connection_t *connection;
-    xcb_screen_t *screen;
-    xcb_colormap_t colormap;
-    xcb_window_t window;
-    xcb_atom_t wm_delete_window_atom;
-    xcb_key_symbols_t *key_symbols;
-    xcb_glx_window_t glxWindow;
-    int desktopWidth;
-    int desktopHeight;
-    float desktopRefreshRate;
-#elif defined(OS_LINUX_WAYLAND)
-    struct wl_display *display;
-
-    struct wl_surface *surface;
-
-    struct wl_registry *registry;
-    struct wl_compositor *compositor;
-    struct zxdg_shell_v6 *shell;
-    struct zxdg_surface_v6 *shell_surface;
-
-    struct wl_keyboard *keyboard;
-    struct wl_pointer *pointer;
-    struct wl_seat *seat;
-#elif defined(OS_APPLE_MACOS)
-    CGDirectDisplayID display;
-    CGDisplayModeRef desktopDisplayMode;
-    NSWindow *nsWindow;
-    NSView *nsView;
-#elif defined(OS_APPLE_IOS)
-    UIWindow *uiWindow;
-    UIView *uiView;
-#elif defined(OS_ANDROID)
     EGLDisplay display;
     EGLint majorVersion;
     EGLint minorVersion;
-    struct android_app *app;
     Java_t java;
     ANativeWindow *nativeWindow;
     bool resumed;
-#endif
 } ksGpuWindow;
 
 bool
@@ -1023,55 +805,6 @@ ksGpuWindow_Create(ksGpuWindow *window, ksDriverInstance *instance, const ksGpuQ
                    ksGpuSurfaceColorFormat colorFormat, ksGpuSurfaceDepthFormat depthFormat,
                    ksGpuSampleCount sampleCount,
                    int width, int height, bool fullscreen);
-
-void ksGpuWindow_Destroy(ksGpuWindow *window);
-
-void ksGpuWindow_Exit(ksGpuWindow *window);
-
-ksGpuWindowEvent ksGpuWindow_ProcessEvents(ksGpuWindow *window);
-
-void ksGpuWindow_SwapInterval(ksGpuWindow *window, int swapInterval);
-
-void ksGpuWindow_SwapBuffers(ksGpuWindow *window);
-
-ksNanoseconds ksGpuWindow_GetNextSwapTimeNanoseconds(ksGpuWindow *window);
-
-ksNanoseconds ksGpuWindow_GetFrameTimeNanoseconds(ksGpuWindow *window);
-
-/*
-================================================================================================================================
-
-GPU timer.
-
-A timer is used to measure the amount of time it takes to complete GPU commands.
-For optimal performance a timer should only be created at load time, not at runtime.
-To avoid synchronization, ksGpuTimer_GetNanoseconds() reports the time from KS_GPU_TIMER_FRAMES_DELAYED frames ago.
-Timer queries are allowed to overlap and can be nested.
-Timer queries that are issued inside a render pass may not produce accurate times on tiling GPUs.
-
-ksGpuTimer
-
-static void ksGpuTimer_Create( ksGpuContext * context, ksGpuTimer * timer );
-static void ksGpuTimer_Destroy( ksGpuContext * context, ksGpuTimer * timer );
-static ksNanoseconds ksGpuTimer_GetNanoseconds( ksGpuTimer * timer );
-
-================================================================================================================================
-*/
-
-#define KS_GPU_TIMER_FRAMES_DELAYED 2
-
-typedef struct {
-    GLuint beginQueries[KS_GPU_TIMER_FRAMES_DELAYED];
-    GLuint endQueries[KS_GPU_TIMER_FRAMES_DELAYED];
-    int queryIndex;
-    ksNanoseconds gpuTime;
-} ksGpuTimer;
-
-void ksGpuTimer_Create(ksGpuContext *context, ksGpuTimer *timer);
-
-void ksGpuTimer_Destroy(ksGpuContext *context, ksGpuTimer *timer);
-
-ksNanoseconds ksGpuTimer_GetNanoseconds(ksGpuTimer *timer);
 
 #ifdef __cplusplus
 }
