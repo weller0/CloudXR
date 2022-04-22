@@ -4,9 +4,11 @@
 #include "log.h"
 #include "EGLHelper.h"
 #include "GraphicRender.h"
+#include "nvidia/CloudXR.h"
 
 ssnwt::EGLHelper eglHelper;
 ssnwt::GraphicRender graphicRender;
+ssnwt::CloudXR cloudXr;
 ANativeWindow *gNativeWindow = nullptr;
 bool quit = false;
 
@@ -15,14 +17,22 @@ void gl_main() {
     ALOGD("+++++ Enter gl thread +++++");
     eglHelper.initialize(gNativeWindow);
     graphicRender.initialize(eglHelper.getWidth(), eglHelper.getHeight());
+
+    cloudXr.connect("-s 192.168.1.106",
+                    graphicRender.getTextureIdL(),
+                    graphicRender.getTextureIdR());
     while (!quit) {
+        ALOGD("draw...");
         graphicRender.clear();
         for (int eye = 0; eye < 2; eye++) {
-            graphicRender.drawFbo(eye);
+            if (graphicRender.setupFrameBuffer(eye, eglHelper.getWidth() / 2,
+                                               eglHelper.getHeight())) {
+                graphicRender.drawFbo(eye);
+            }
+            graphicRender.bindDefaultFrameBuffer();
             graphicRender.draw(eye);
         }
         eglHelper.swapBuffer();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     eglHelper.release();
     ALOGD("----- exit gl thread -----");

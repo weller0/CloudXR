@@ -5,7 +5,12 @@
     <uses-feature
         android:name="android.software.vr.mode"
         android:required="true" />
-    <application>
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <application android:requestLegacyExternalStorage="true">
         <activity
             android:name=".CloudVRActivity"
             android:configChanges="orientation|keyboardHidden"

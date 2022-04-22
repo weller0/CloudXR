@@ -39,7 +39,8 @@ namespace ssnwt {
         checkGlError("glDrawArrays");
     }
 
-    bool GraphicRender::setupFrameBuffer(GLuint texture, int32_t width, int32_t height) {
+    bool GraphicRender::setupFrameBuffer(int32_t eye, int32_t width, int32_t height) {
+        GLuint texture = mTextureID[eye];
         auto it = frameBuffers.find(texture);
 
         if (it == frameBuffers.end()) {
@@ -82,7 +83,7 @@ namespace ssnwt {
 
     void GraphicRender::drawFbo() {
         for (int eye = 0; eye < 2; eye++) {
-            if (setupFrameBuffer(mTextureID[eye], mWidth / 2, mHeight)) {
+            if (setupFrameBuffer(eye, mWidth / 2, mHeight)) {
                 glClearColor(0.0f, eye == 0 ? 0.3f : 0, eye == 0 ? 0 : 0.3f, 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             }
@@ -91,7 +92,7 @@ namespace ssnwt {
     }
 
     void GraphicRender::drawFbo(const uint32_t eye) {
-        if (setupFrameBuffer(mTextureID[eye], mWidth / 2, mHeight)) {
+        if (setupFrameBuffer(eye, mWidth / 2, mHeight)) {
             glClearColor(0.0f, eye == 0 ? 0.3f : 0, eye == 0 ? 0 : 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         }

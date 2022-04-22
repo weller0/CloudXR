@@ -61,19 +61,23 @@ namespace ssnwt {
 
         void drawFbo();
 
+        bool setupFrameBuffer(int32_t eye, int32_t width, int32_t height);
+
+        void bindDefaultFrameBuffer();
+
         void updateTexture(GLuint texL, GLuint texR) {
             mTextureID[0] = texL;
             mTextureID[1] = texR;
         }
 
+        GLuint getTextureIdL() { return mTextureID[0]; }
+
+        GLuint getTextureIdR() { return mTextureID[1]; }
+
     private:
         void createTexture();
 
         void draw(const float position[], const float uv[]);
-
-        bool setupFrameBuffer(GLuint texture, int32_t width, int32_t height);
-
-        void bindDefaultFrameBuffer();
 
         void createProgram(const char *vertexSource, const char *fragmentSource);
 
