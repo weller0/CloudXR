@@ -11,7 +11,11 @@ namespace ssnwt {
         mWidth = width;
         mHeight = height;
         createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
-        createTexture();
+        mTextureID[0] = createTexture();
+        mTextureID[1] = createTexture();
+        mFrameBuffer[0] = createFrameBuffer(width / 2, height);
+        mFrameBuffer[1] = createFrameBuffer(width / 2, height);
+        checkGlError("initialize");
     }
 
     void GraphicRender::draw(const uint32_t eye) {
@@ -40,40 +44,10 @@ namespace ssnwt {
     }
 
     bool GraphicRender::setupFrameBuffer(int32_t eye, int32_t width, int32_t height) {
-        GLuint texture = mTextureID[eye];
-        auto it = frameBuffers.find(texture);
-
-        if (it == frameBuffers.end()) {
-            GLuint framebuffer, rbo;
-            glGenFramebuffers(1, &framebuffer);
-            glGenRenderbuffers(1, &rbo);
-
-            glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
-            glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
-            glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                                      GL_RENDERBUFFER, rbo);
-
-            GLenum status = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-            if (status != GL_FRAMEBUFFER_COMPLETE) {
-                ALOGV("[GraphicRender]Incomplete frame buffer object!");
-                return false;
-            }
-
-            frameBuffers[texture] = framebuffer;
-            it = frameBuffers.find(texture);
-
-            ALOGV("[GraphicRender]Created FBO %d for texture:%d, size(%d, %d).",
-                  framebuffer, texture, width, height);
-        }
-
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, it->second);
+//        ALOGD("setupFrameBuffer texture:%d, frame buffer:%d", mTextureID[eye], mFrameBuffer[eye]);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFrameBuffer[eye]);
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER,
-                               GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+                               GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID[eye], 0);
         return true;
     }
 
@@ -99,28 +73,43 @@ namespace ssnwt {
         bindDefaultFrameBuffer();
     }
 
-    void GraphicRender::createTexture() {
-        glGenTextures(2, mTextureID);
+    GLuint GraphicRender::createFrameBuffer(int32_t width, int32_t height) {
+        GLuint framebuffer, rbo;
+        glGenFramebuffers(1, &framebuffer);
+        glGenRenderbuffers(1, &rbo);
+
+        glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
+        glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                  GL_RENDERBUFFER, rbo);
+
+        GLenum status = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+        if (status != GL_FRAMEBUFFER_COMPLETE) {
+            ALOGV("[GraphicRender]Incomplete frame buffer object!");
+            return 0;
+        }
+        return framebuffer;
+    }
+
+    GLuint GraphicRender::createTexture() {
+        GLuint texture = 0;
+        glGenTextures(1, &texture);
 
         // tex L
-        glBindTexture(GL_TEXTURE_2D, mTextureID[0]);
+        glBindTexture(GL_TEXTURE_2D, texture);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mWidth / 2, mHeight,
                      0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        checkGlError("create l");
-
-        // tex R
-        glBindTexture(GL_TEXTURE_2D, mTextureID[1]);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mWidth / 2, mHeight,
-                     0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        checkGlError("create r");
+        checkGlError("createTexture");
+        return texture;
     }
 
     void GraphicRender::createProgram(const char *vertexSource, const char *fragmentSource) {

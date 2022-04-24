@@ -19,10 +19,20 @@ set_target_properties(libPoco PROPERTIES IMPORTED_LOCATION
         ${CLOUDXR_SDK_ROOT}/libs/arm64-v8a/libPoco.so)
 include_directories(${CLOUDXR_SDK_ROOT}/include)
 
+#### 添加 OpenXR Loader 库 ####
+set(OPENXR_SDK_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/openxr/openxr)
+add_library(libopenxr_loader SHARED IMPORTED)
+set_target_properties(libopenxr_loader PROPERTIES IMPORTED_LOCATION
+        ${OPENXR_SDK_ROOT}/libs/arm64-v8a/libopenxr_loader.so)
+include_directories(${OPENXR_SDK_ROOT}/include)
+add_definitions(-DXR_USE_PLATFORM_ANDROID)
+add_definitions(-DXR_USE_GRAPHICS_API_OPENGL_ES)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(cloudxrlib-jni
         SHARED
+        openxr/OpenXR.cpp
         nvidia/AudioRender.cpp
         nvidia/CloudXR.cpp
         EGLHelper.cpp
@@ -39,4 +49,5 @@ target_link_libraries(cloudxrlib-jni
         libCloudXRClient
         libgrid
         libGsAudioWebRTC
-        libPoco)
+        libPoco
+        libopenxr_loader)

@@ -49,7 +49,6 @@ namespace ssnwt {
     };
 
     class GraphicRender {
-        typedef std::unordered_map<GLuint, GLuint> IDMap;
     public:
         void clear();
 
@@ -75,7 +74,9 @@ namespace ssnwt {
         GLuint getTextureIdR() { return mTextureID[1]; }
 
     private:
-        void createTexture();
+        GLuint createTexture();
+
+        GLuint createFrameBuffer(int32_t width, int32_t height);
 
         void draw(const float position[], const float uv[]);
 
@@ -94,10 +95,10 @@ namespace ssnwt {
                                 0, 0, 0, 1,};
         int32_t mProgram;
         GLuint mTextureID[2] = {0, 0};
+        GLuint mFrameBuffer[2] = {0, 0};
         int32_t muMVPMatrixHandle;
         int32_t maPositionHandle;
         int32_t maTextureHandle;
-        IDMap frameBuffers;
         int32_t mWidth, mHeight;
     };
 }

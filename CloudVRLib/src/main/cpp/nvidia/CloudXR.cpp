@@ -43,7 +43,7 @@ namespace ssnwt {
         textures[0] = texEyeL;
         textures[1] = texEyeR;
         GOptions.ParseString(cmdLine);
-        ALOGV("mServerIP %s", GOptions.mServerIP.c_str());
+        ALOGV("[CloudXR]mServerIP %s", GOptions.mServerIP.c_str());
         deviceDesc = getDeviceDesc();
         cxrClientCallbacks callbacks = getClientCallbacks();
         cxrGraphicsContext context{cxrGraphicsContext_GLES};
@@ -51,7 +51,7 @@ namespace ssnwt {
         context.egl.context = eglGetCurrentContext();
 
         if (context.egl.context == nullptr) {
-            ALOGV("Error, null context");
+            ALOGV("[CloudXR]Error, null context");
         }
         cxrReceiverDesc desc = {};
         desc.requestedVersion = CLOUDXR_VERSION_DWORD;
@@ -66,18 +66,19 @@ namespace ssnwt {
         desc.logMaxAgeDays = CLOUDXR_LOG_MAX_DEFAULT;
         cxrError err = cxrCreateReceiver(&desc, &receiverHandle);
         if (err != cxrError_Success) {
-            ALOGE("Failed to create CloudXR receiver. Error %d, %s.", err, cxrErrorString(err));
+            ALOGE("[CloudXR]Failed to create CloudXR receiver. Error %d, %s.", err,
+                  cxrErrorString(err));
             return err;
         }
-        ALOGV("Receiver created!");
+        ALOGV("[CloudXR]Receiver created!");
         err = cxrConnect(receiverHandle, GOptions.mServerIP.c_str(), connectionFlags);
         if (err != cxrError_Success) {
-            ALOGE("Failed to connect to CloudXR server at %s. Error %d, %s.",
+            ALOGE("[CloudXR]Failed to connect to CloudXR server at %s. Error %d, %s.",
                   GOptions.mServerIP.c_str(), (int) err, cxrErrorString(err));
             disconnect();
             return err;
         } else {
-            ALOGV("Receiver created for server: %s", GOptions.mServerIP.c_str());
+            ALOGV("[CloudXR]Receiver created for server: %s", GOptions.mServerIP.c_str());
         }
         delete pAudioRender;
         pAudioRender = new AudioRender();
@@ -96,7 +97,7 @@ namespace ssnwt {
 
     int CloudXR::render() {
         if (!receiverHandle) {
-            ALOGE("receiverHandle is null");
+            ALOGE("[CloudXR]receiverHandle is null");
             return cxrError_Receiver_Invalid;
         }
         if (clientState != cxrClientState_StreamingSessionInProgress) {
@@ -110,7 +111,7 @@ namespace ssnwt {
                                           cxrFrameMask_All, timeoutMs);
         bool frameValid = (frameErr == cxrError_Success);
         if (!frameValid) {
-            ALOGE("Error in LatchFrame [%0d] = %s", frameErr, cxrErrorString(frameErr));
+            ALOGE("[CloudXR]Error in LatchFrame [%0d] = %s", frameErr, cxrErrorString(frameErr));
         }
 
         for (int eye = 0; eye < 2; eye++) {
@@ -144,7 +145,7 @@ namespace ssnwt {
         desc.deliveryType = cxrDeliveryType_Stereo_RGB;
         const int maxWidth = (int) (desc.maxResFactor * (float) desc.width);
         const int maxHeight = (int) (desc.maxResFactor * (float) desc.height);
-        ALOGD("HMD size requested as %d x %d, max %d x %d",
+        ALOGD("[CloudXR]HMD size requested as %d x %d, max %d x %d",
               desc.width, desc.height, maxWidth, maxHeight);
         desc.fps = 72;
         desc.ipd = 0.064f;
@@ -235,7 +236,7 @@ namespace ssnwt {
     }
 
     void CloudXR::triggerHaptic(const cxrHapticFeedback *hapticFeedback) {
-        ALOGD("triggerHaptic");
+        ALOGD("[CloudXR]triggerHaptic");
     }
 
     cxrBool CloudXR::renderAudio(const cxrAudioFrame *audioFrame) {
@@ -249,11 +250,11 @@ namespace ssnwt {
     }
 
     void CloudXR::receiveUserData(const void *data, uint32_t size) {
-        ALOGD("receiveUserData size:%d", size);
+        ALOGD("[CloudXR]receiveUserData size:%d", size);
     }
 
     void CloudXR::updateClientState(cxrClientState state, cxrStateReason reason) {
-        ALOGD("updateClientState state:%s, reason:%s",
+        ALOGD("[CloudXR]updateClientState state:%s, reason:%s",
               ClientStateEnumToString(state), StateReasonEnumToString(reason));
         clientState = state;
         clientStateReason = reason;

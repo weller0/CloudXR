@@ -7,6 +7,6 @@ dependencyResolutionManagement {
   }
 }
 rootProject.name = "CloudXR"
-//include ':app'
+include ':app'
 include ':CloudVRLib'
 include ':cloudxr'

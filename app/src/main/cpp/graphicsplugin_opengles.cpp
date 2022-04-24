@@ -13,9 +13,9 @@
 #include "geometry.h"
 #include "graphicsplugin.h"
 #include "platformplugin.h"
-#include "gfxwrapper_opengl.h"
 #include "xr_linear.h"
 #include "GraphicRender.h"
+#include "EGLHelper.h"
 
 namespace {
     struct OpenGLESGraphicsPlugin : public IGraphicsPlugin {
@@ -46,8 +46,6 @@ namespace {
             return {XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME};
         }
 
-        ksGpuWindow window{};
-
         void InitializeDevice(XrInstance instance, XrSystemId systemId) override {
             // Extension function must be loaded by name
             PFN_xrGetOpenGLESGraphicsRequirementsKHR pfnGetOpenGLESGraphicsRequirementsKHR = nullptr;
@@ -60,17 +58,9 @@ namespace {
                                                               &graphicsRequirements));
 
             // Initialize the gl extensions. Note we have to open a window.
-            ksDriverInstance driverInstance{};
-            ksGpuQueueInfo queueInfo{};
-            ksGpuSurfaceColorFormat colorFormat{KS_GPU_SURFACE_COLOR_FORMAT_B8G8R8A8};
-            ksGpuSurfaceDepthFormat depthFormat{KS_GPU_SURFACE_DEPTH_FORMAT_D24};
-            ksGpuSampleCount sampleCount{KS_GPU_SAMPLE_COUNT_1};
-            if (!ksGpuWindow_Create(&window, &driverInstance, &queueInfo, 0, colorFormat,
-                                    depthFormat, sampleCount, 640, 480, false)) {
-                THROW("Unable to create GL context");
-            }
+
             Log::Write(Log::Level::Info,
-                       Fmt("ksGpuWindow_Create nativeWindow(%p)", window.nativeWindow));
+                       Fmt("ksGpuWindow_Create nativeWindow(%p)", ));
             GLint major = 0;
             GLint minor = 0;
             glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -168,6 +158,7 @@ namespace {
                                    colorTexture, 0);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture,
                                    0);
+
             glClearColor(0.6f, eye == 0 ? 0.3f : 0, eye == 0 ? 0 : 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
