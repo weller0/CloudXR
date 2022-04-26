@@ -28,24 +28,24 @@ namespace ssnwt {
             {
                     // X, Y, Z
                     -1.0f, 1.0f, 0,
-                    0.0f, 1.0f, 0,
+                    1.0f, 1.0f, 0,
                     -1.0f, -1.0f, 0,
-                    0.0f, -1.0f, 0,
+                    1.0f, -1.0f, 0,
             },
             {
                     // X, Y, Z
-                    0.0f,  1.0f, 0,
+                    -1.0f,  1.0f, 0,
                     1.0f, 1.0f, 0,
-                    0.0f,  -1.0f, 0,
+                    -1.0f,  -1.0f, 0,
                     1.0f, -1.0f, 0,
             }
     };
     constexpr float TextureVertex[] = {
             // U, V
-            0.f, 0.f,
-            1.f, 0.f,
             0.f, 1.f,
             1.f, 1.f,
+            0.f, 0.f,
+            1.f, 0.f,
     };
 
     class GraphicRender {
@@ -56,18 +56,9 @@ namespace ssnwt {
 
         void draw(const uint32_t eye);
 
-        void drawFbo(const uint32_t eye);
-
-        void drawFbo();
-
-        bool setupFrameBuffer(int32_t eye, int32_t width, int32_t height);
+        bool setupFrameBuffer(int32_t eye);
 
         void bindDefaultFrameBuffer();
-
-        void updateTexture(GLuint texL, GLuint texR) {
-            mTextureID[0] = texL;
-            mTextureID[1] = texR;
-        }
 
         GLuint getTextureIdL() { return mTextureID[0]; }
 

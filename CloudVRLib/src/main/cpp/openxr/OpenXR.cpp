@@ -51,7 +51,8 @@ namespace ssnwt {
         ALOGD("[OpenXR]-");
     }
 
-    XrResult OpenXR::initialize(ANativeWindow *aNativeWindow) {
+    XrResult OpenXR::initialize(ANativeWindow *aNativeWindow, draw_frame_call_back cb) {
+        m_draw_frame_cb = cb;
         ALOGD("[OpenXR]initialize");
         p_NativeWindow = aNativeWindow;
         CHECK(m_instance != XR_NULL_HANDLE);
@@ -464,6 +465,7 @@ namespace ssnwt {
                     swapchainImages.push_back(
                             reinterpret_cast<XrSwapchainImageBaseHeader *>(&image));
                 }
+                m_swapchainImageBuffers.push_back(std::move(swapchainImageBuffer));
 //                for (int imageindex = 0; imageindex < imageCount; ++imageindex) {
 //                    XrSwapchainImageOpenGLESKHR gleskhr{XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR};
 //                    ALOGV("xmh push_back XrSwapchainImageOpenGLESKHR:%d",imageindex);
@@ -504,7 +506,7 @@ namespace ssnwt {
         return XR_SUCCESS;
     }
 
-    XrResult OpenXR::render() {
+    void OpenXR::processEvent() {
         while (const XrEventDataBaseHeader *event = tryReadNextEvent()) {
             switch (event->type) {
                 case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING: {
@@ -554,7 +556,10 @@ namespace ssnwt {
                 }
             }
         }
+    }
 
+    XrResult OpenXR::render() {
+        processEvent();
         CHECK(m_session != XR_NULL_HANDLE);
 
         XrFrameWaitInfo frameWaitInfo{XR_TYPE_FRAME_WAIT_INFO};
@@ -635,9 +640,21 @@ namespace ssnwt {
             projectionLayerViews[i].subImage.imageRect.extent = {viewSwapchain.width,
                                                                  viewSwapchain.height};
 
-            const XrSwapchainImageBaseHeader *const swapchainImage = m_swapchainImages[viewSwapchain.handle][swapchainImageIndex];
-            RenderView(i, projectionLayerViews[i], swapchainImage, m_colorSwapchainFormat);
+            const XrSwapchainImageBaseHeader *const swapchainImage =
+                    m_swapchainImages[viewSwapchain.handle][swapchainImageIndex];
+            // Texture arrays not supported.
+            CHECK(projectionLayerViews[i].subImage.imageArrayIndex == 0);
+            const uint32_t colorTexture =
+                    reinterpret_cast<const XrSwapchainImageOpenGLESKHR *>(swapchainImage)->image;
+            RenderView(projectionLayerViews[i].subImage.imageRect, colorTexture);
 
+            glClearColor(0, 0, 0, 1);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            if (m_draw_frame_cb) {
+                m_draw_frame_cb(i);
+            }
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
             OPENXR_CHECK(xrReleaseSwapchainImage(viewSwapchain.handle, &releaseInfo));
         }
@@ -648,19 +665,15 @@ namespace ssnwt {
         return true;
     }
 
-    void OpenXR::RenderView(const uint32_t eye, const XrCompositionLayerProjectionView &layerView,
-                            const XrSwapchainImageBaseHeader *swapchainImage,
-                            int64_t swapchainFormat) {
-        CHECK(layerView.subImage.imageArrayIndex == 0);  // Texture arrays not supported.
-
+    void OpenXR::RenderView(XrRect2Di imageRect, const uint32_t colorTexture) {
+        if (m_swapchainFramebuffer == 0)
+            glGenFramebuffers(1, &m_swapchainFramebuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, m_swapchainFramebuffer);
 
-        const uint32_t colorTexture = reinterpret_cast<const XrSwapchainImageOpenGLESKHR *>(swapchainImage)->image;
-
-        glViewport(static_cast<GLint>(layerView.subImage.imageRect.offset.x),
-                   static_cast<GLint>(layerView.subImage.imageRect.offset.y),
-                   static_cast<GLsizei>(layerView.subImage.imageRect.extent.width),
-                   static_cast<GLsizei>(layerView.subImage.imageRect.extent.height));
+        glViewport(static_cast<GLint>(imageRect.offset.x),
+                   static_cast<GLint>(imageRect.offset.y),
+                   static_cast<GLsizei>(imageRect.extent.width),
+                   static_cast<GLsizei>(imageRect.extent.height));
         glFrontFace(GL_CW);
         glCullFace(GL_BACK);
         glEnable(GL_CULL_FACE);
@@ -669,13 +682,7 @@ namespace ssnwt {
         const uint32_t depthTexture = GetDepthTexture(colorTexture);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
                                colorTexture, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture,
-                               0);
-
-        glClearColor(0.6f, eye == 0 ? 0.3f : 0, eye == 0 ? 0 : 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
     }
 
     uint32_t OpenXR::GetDepthTexture(uint32_t colorTexture) {

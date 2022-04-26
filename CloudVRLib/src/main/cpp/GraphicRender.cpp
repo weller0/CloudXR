@@ -43,7 +43,7 @@ namespace ssnwt {
         checkGlError("glDrawArrays");
     }
 
-    bool GraphicRender::setupFrameBuffer(int32_t eye, int32_t width, int32_t height) {
+    bool GraphicRender::setupFrameBuffer(int32_t eye) {
 //        ALOGD("setupFrameBuffer texture:%d, frame buffer:%d", mTextureID[eye], mFrameBuffer[eye]);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFrameBuffer[eye]);
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER,
@@ -53,24 +53,6 @@ namespace ssnwt {
 
     void GraphicRender::bindDefaultFrameBuffer() {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    }
-
-    void GraphicRender::drawFbo() {
-        for (int eye = 0; eye < 2; eye++) {
-            if (setupFrameBuffer(eye, mWidth / 2, mHeight)) {
-                glClearColor(0.0f, eye == 0 ? 0.3f : 0, eye == 0 ? 0 : 0.3f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            }
-            bindDefaultFrameBuffer();
-        }
-    }
-
-    void GraphicRender::drawFbo(const uint32_t eye) {
-        if (setupFrameBuffer(eye, mWidth / 2, mHeight)) {
-            glClearColor(0.0f, eye == 0 ? 0.3f : 0, eye == 0 ? 0 : 0.3f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        }
-        bindDefaultFrameBuffer();
     }
 
     GLuint GraphicRender::createFrameBuffer(int32_t width, int32_t height) {

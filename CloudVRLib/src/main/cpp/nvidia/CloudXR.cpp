@@ -39,9 +39,7 @@ const char *StateReasonEnumToString(cxrStateReason reason) {
 #undef CASE
 
 namespace ssnwt {
-    int CloudXR::connect(const char *cmdLine, int texEyeL, int texEyeR) {
-        textures[0] = texEyeL;
-        textures[1] = texEyeR;
+    int CloudXR::connect(const char *cmdLine) {
         GOptions.ParseString(cmdLine);
         ALOGV("[CloudXR]mServerIP %s", GOptions.mServerIP.c_str());
         deviceDesc = getDeviceDesc();
@@ -95,41 +93,34 @@ namespace ssnwt {
         return cxrError_Success; //true
     }
 
-    int CloudXR::render() {
+    int CloudXR::preRender(cxrFramesLatched *framesLatched) {
         if (!receiverHandle) {
             ALOGE("[CloudXR]receiverHandle is null");
             return cxrError_Receiver_Invalid;
         }
-        if (clientState != cxrClientState_StreamingSessionInProgress) {
-            //ALOGE("receiverHandle is cxrError_Streamer_Not_Ready");
-            return cxrError_Streamer_Not_Ready;
-        }
+//        if (clientState != cxrClientState_StreamingSessionInProgress) {
+//            ALOGE("receiverHandle is cxrError_Streamer_Not_Ready %s", ClientStateEnumToString(clientState));
+//            return cxrError_Streamer_Not_Ready;
+//        }
 
-        cxrFramesLatched framesLatched;
         const uint32_t timeoutMs = 500;
-        cxrError frameErr = cxrLatchFrame(receiverHandle, &framesLatched,
+        cxrError frameErr = cxrLatchFrame(receiverHandle, framesLatched,
                                           cxrFrameMask_All, timeoutMs);
         bool frameValid = (frameErr == cxrError_Success);
         if (!frameValid) {
             ALOGE("[CloudXR]Error in LatchFrame [%0d] = %s", frameErr, cxrErrorString(frameErr));
+            return cxrError_Frame_Invalid;
         }
+        return cxrError_Success; //true
+    }
 
-        for (int eye = 0; eye < 2; eye++) {
-            cxrVideoFrame &vf = framesLatched.frames[eye];
-            // TODO:bind fbo
-//            if (openGlTools.setupFrameBuffer(textures[eye], vf.widthFinal, vf.heightFinal)) {
-//                if (frameValid) {
-//                    // blit streamed frame into the world layer
-//                    cxrBlitFrame(receiverHandle, &framesLatched, 1 << eye);
-//                } else {
-//                    openGlTools.clear(eye);
-//                }
-//            }
-//            openGlTools.bindDefaultFrameBuffer();
-        }
-        if (frameValid) {
-            cxrReleaseFrame(receiverHandle, &framesLatched);
-        }
+    int CloudXR::render(uint32_t eye, cxrFramesLatched framesLatched) {
+        cxrBlitFrame(receiverHandle, &framesLatched, static_cast<uint32_t>(1 << eye));
+        return cxrError_Success; //true
+    }
+
+    int CloudXR::postRender(cxrFramesLatched framesLatched) {
+        cxrReleaseFrame(receiverHandle, &framesLatched);
         return cxrError_Success; //true
     }
 

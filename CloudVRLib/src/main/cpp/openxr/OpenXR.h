@@ -11,6 +11,7 @@
 #include <android/native_window.h>
 #include <array>
 #include <map>
+#include <list>
 #include "GraphicRender.h"
 
 namespace Side {
@@ -52,30 +53,31 @@ struct InputState {
 };
 
 namespace ssnwt {
+    typedef void (*draw_frame_call_back)(uint32_t);
     class OpenXR {
     public:
         OpenXR(JavaVM *vm, jobject activity);
 
         ~OpenXR();
 
-        XrResult initialize(ANativeWindow *aNativeWindow);
+        XrResult initialize(ANativeWindow *aNativeWindow, draw_frame_call_back cb);
+
+        void processEvent();
 
         XrResult render();
 
         XrResult release();
 
+    private:
+        const XrEventDataBaseHeader *tryReadNextEvent();
+
         bool RenderLayer(XrTime predictedDisplayTime,
                          std::vector<XrCompositionLayerProjectionView> &projectionLayerViews,
                          XrCompositionLayerProjection &layer);
 
-        void RenderView(const uint32_t eye, const XrCompositionLayerProjectionView &layerView,
-                        const XrSwapchainImageBaseHeader *swapchainImage,
-                        int64_t swapchainFormat);
+        void RenderView(XrRect2Di imageRect, const uint32_t colorTexture);
 
         uint32_t GetDepthTexture(uint32_t colorTexture);
-
-    private:
-        const XrEventDataBaseHeader *tryReadNextEvent();
 
         XrInstance m_instance{XR_NULL_HANDLE};
         XrSession m_session{XR_NULL_HANDLE};
@@ -94,6 +96,9 @@ namespace ssnwt {
 
         GLuint m_swapchainFramebuffer{0};
         std::map<uint32_t, uint32_t> m_colorToDepthMap;
+        std::list<std::vector<XrSwapchainImageOpenGLESKHR>> m_swapchainImageBuffers;
+
+        draw_frame_call_back m_draw_frame_cb{0};
     };
 }
 

@@ -11,11 +11,15 @@ using namespace std;
 namespace ssnwt {
     class CloudXR {
     public:
-        int connect(const char *cmdLine, int texEyeL, int texEyeR);
+        int connect(const char *cmdLine);
 
         int disconnect();
 
-        int render();
+        int preRender(cxrFramesLatched *framesLatched);
+
+        int render(uint32_t eye, cxrFramesLatched framesLatched);
+
+        int postRender(cxrFramesLatched framesLatched);
 
     private:
 
@@ -38,7 +42,6 @@ namespace ssnwt {
         cxrReceiverHandle receiverHandle = nullptr;
         ::CloudXR::ClientOptions GOptions;
         AudioRender *pAudioRender;
-        int textures[2] = {0, 0};
         cxrClientState clientState = cxrClientState_ReadyToConnect;
         cxrStateReason clientStateReason = cxrStateReason_NoError;
         uint64_t connectionFlags = cxrConnectionFlags_ConnectAsync;
