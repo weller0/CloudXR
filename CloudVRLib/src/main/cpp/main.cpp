@@ -1,6 +1,6 @@
 #include <android/native_window_jni.h>
-#include <jni.h>
 #include <thread>
+#include <string.h>
 #include "log.h"
 #include "EGLHelper.h"
 #include "GraphicRender.h"
@@ -11,6 +11,7 @@ ssnwt::EGLHelper eglHelper;
 ssnwt::GraphicRender graphicRender;
 ssnwt::CloudXR cloudXr;
 ssnwt::OpenXR *pOpenXr;
+char *cmdLine;
 ANativeWindow *gNativeWindow = nullptr;
 bool quit = false;
 
@@ -126,29 +127,47 @@ cxrMatrix34 cxrConvert(const ovrMatrix4f &m) {
 
 void updateTrackingState(cxrVRTrackingState *trackingState) {
     XrSpaceLocation location;
+    cxrVRTrackingState TrackingState = {};
+    // hmd
     if (pOpenXr->getLocateSpace(&location) == XR_SUCCESS) {
-        cxrVRTrackingState TrackingState = {};
         TrackingState.hmd.pose.deviceToAbsoluteTracking =
                 cxrConvert(getTransformFromPose(location.pose));
         TrackingState.hmd.pose.poseIsValid = cxrTrue;
         TrackingState.hmd.pose.deviceIsConnected = cxrTrue;
         TrackingState.hmd.pose.trackingResult = cxrTrackingResult_Running_OK;
-        if (trackingState != nullptr) {
-            *trackingState = TrackingState;
+    }
+    // left/right controller
+    if (pOpenXr->syncAction() == XR_SUCCESS) {
+        for (uint32_t eye = 0; eye < CXR_NUM_CONTROLLERS; eye++) {
+            if (pOpenXr->getControllerSpace(eye, &location) == XR_SUCCESS) {
+                ALOGD("getControllerSpace (%0.3f, %0.3f, %0.3f, %0.3f), (%0.3f, %0.3f, %0.3f)",
+                      location.pose.orientation.x, location.pose.orientation.y,
+                      location.pose.orientation.z, location.pose.orientation.w,
+                      location.pose.position.x, location.pose.position.y, location.pose.position.z);
+                TrackingState.controller[eye].pose.deviceToAbsoluteTracking =
+                        cxrConvert(getTransformFromPose(location.pose));
+                TrackingState.controller[eye].pose.poseIsValid = cxrTrue;
+                TrackingState.controller[eye].pose.deviceIsConnected = cxrTrue;
+                TrackingState.controller[eye].pose.trackingResult = cxrTrackingResult_Running_OK;
+            }
         }
+    }
+    if (trackingState != nullptr) {
+        *trackingState = TrackingState;
     }
 }
 
 void onDraw(uint32_t eye) {
     graphicRender.draw(eye);
 }
+
 void gl_main() {
     ALOGD("+++++ Enter gl thread +++++");
     eglHelper.initialize(gNativeWindow);
     ALOGD("window (%d, %d)", eglHelper.getWidth(), eglHelper.getHeight());
     graphicRender.initialize(eglHelper.getWidth(), eglHelper.getHeight());
 
-    cloudXr.connect("-s 192.168.1.106", updateTrackingState);
+    cloudXr.connect(cmdLine, updateTrackingState);
     pOpenXr->initialize(gNativeWindow, onDraw);
     cxrFramesLatched framesLatched;
     while (!quit) {
@@ -164,15 +183,23 @@ void gl_main() {
         pOpenXr->render();
         //std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
     }
+    cloudXr.disconnect();
+    if (pOpenXr) {
+        pOpenXr->release();
+        pOpenXr = nullptr;
+    }
     eglHelper.release();
     ALOGD("----- exit gl thread -----");
 }
 JNIEXPORT void JNICALL
 Java_com_ssnwt_cloudvr_CloudVRActivity_initialize(JNIEnv *env, jobject thiz,
-                                                  jobject activity, jobject surface,
-                                                  jstring cmdLine) {
+                                                  jobject
+                                                  activity, jobject surface,
+                                                  jstring
+                                                  cmd) {
     gNativeWindow = ANativeWindow_fromSurface(env, surface);
-    ALOGD("Java_com_ssnwt_cloudvr_CloudVRActivity_initialize gNativeWindow=%p", gNativeWindow);
+    cmdLine = strdup(env->GetStringUTFChars(cmd, 0));
+    ALOGD ("Java_com_ssnwt_cloudvr_CloudVRActivity_initialize gNativeWindow=%p", gNativeWindow);
     JavaVM *vm;
     env->GetJavaVM(&vm);
     pOpenXr = new ssnwt::OpenXR(vm, activity);
@@ -180,7 +207,10 @@ Java_com_ssnwt_cloudvr_CloudVRActivity_initialize(JNIEnv *env, jobject thiz,
     mainThread.detach();
 }
 JNIEXPORT void JNICALL
-Java_com_ssnwt_cloudvr_CloudVRActivity_release(JNIEnv *env, jobject thiz) {
+Java_com_ssnwt_cloudvr_CloudVRActivity_release(JNIEnv
+                                               *env,
+                                               jobject thiz
+) {
     quit = true;
 }
 }

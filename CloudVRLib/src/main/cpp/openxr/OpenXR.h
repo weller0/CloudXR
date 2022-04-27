@@ -59,8 +59,6 @@ namespace ssnwt {
     public:
         OpenXR(JavaVM *vm, jobject activity);
 
-        ~OpenXR();
-
         XrResult initialize(ANativeWindow *aNativeWindow, draw_frame_call_back cb);
 
         void processEvent();
@@ -72,6 +70,21 @@ namespace ssnwt {
         XrResult getLocateSpace(XrSpaceLocation *location) {
             return xrLocateSpace(m_appSpace, m_appSpace, 0, location);
         }
+
+        XrResult getControllerSpace(uint32_t side, XrSpaceLocation *location) {
+            return xrLocateSpace(m_input.handSpace[side], m_appSpace, 0, location);
+        }
+
+        XrResult syncAction() {
+            // Sync actions
+            const XrActiveActionSet activeActionSet{m_input.actionSet, XR_NULL_PATH};
+            XrActionsSyncInfo syncInfo{XR_TYPE_ACTIONS_SYNC_INFO};
+            syncInfo.countActiveActionSets = 1;
+            syncInfo.activeActionSets = &activeActionSet;
+            return xrSyncActions(m_session, &syncInfo);
+        }
+
+        XrResult getControllerState();
 
     private:
         const XrEventDataBaseHeader *tryReadNextEvent();
