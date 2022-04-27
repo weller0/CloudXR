@@ -15,6 +15,129 @@ ANativeWindow *gNativeWindow = nullptr;
 bool quit = false;
 
 extern "C" {
+typedef struct ovrMatrix4f_ {
+    float M[4][4];
+} ovrMatrix4f;
+
+ovrMatrix4f multiply(const ovrMatrix4f *a, const ovrMatrix4f *b) {
+    ovrMatrix4f out;
+    out.M[0][0] = a->M[0][0] * b->M[0][0] + a->M[0][1] * b->M[1][0] + a->M[0][2] * b->M[2][0] +
+                  a->M[0][3] * b->M[3][0];
+    out.M[1][0] = a->M[1][0] * b->M[0][0] + a->M[1][1] * b->M[1][0] + a->M[1][2] * b->M[2][0] +
+                  a->M[1][3] * b->M[3][0];
+    out.M[2][0] = a->M[2][0] * b->M[0][0] + a->M[2][1] * b->M[1][0] + a->M[2][2] * b->M[2][0] +
+                  a->M[2][3] * b->M[3][0];
+    out.M[3][0] = a->M[3][0] * b->M[0][0] + a->M[3][1] * b->M[1][0] + a->M[3][2] * b->M[2][0] +
+                  a->M[3][3] * b->M[3][0];
+
+    out.M[0][1] = a->M[0][0] * b->M[0][1] + a->M[0][1] * b->M[1][1] + a->M[0][2] * b->M[2][1] +
+                  a->M[0][3] * b->M[3][1];
+    out.M[1][1] = a->M[1][0] * b->M[0][1] + a->M[1][1] * b->M[1][1] + a->M[1][2] * b->M[2][1] +
+                  a->M[1][3] * b->M[3][1];
+    out.M[2][1] = a->M[2][0] * b->M[0][1] + a->M[2][1] * b->M[1][1] + a->M[2][2] * b->M[2][1] +
+                  a->M[2][3] * b->M[3][1];
+    out.M[3][1] = a->M[3][0] * b->M[0][1] + a->M[3][1] * b->M[1][1] + a->M[3][2] * b->M[2][1] +
+                  a->M[3][3] * b->M[3][1];
+
+    out.M[0][2] = a->M[0][0] * b->M[0][2] + a->M[0][1] * b->M[1][2] + a->M[0][2] * b->M[2][2] +
+                  a->M[0][3] * b->M[3][2];
+    out.M[1][2] = a->M[1][0] * b->M[0][2] + a->M[1][1] * b->M[1][2] + a->M[1][2] * b->M[2][2] +
+                  a->M[1][3] * b->M[3][2];
+    out.M[2][2] = a->M[2][0] * b->M[0][2] + a->M[2][1] * b->M[1][2] + a->M[2][2] * b->M[2][2] +
+                  a->M[2][3] * b->M[3][2];
+    out.M[3][2] = a->M[3][0] * b->M[0][2] + a->M[3][1] * b->M[1][2] + a->M[3][2] * b->M[2][2] +
+                  a->M[3][3] * b->M[3][2];
+
+    out.M[0][3] = a->M[0][0] * b->M[0][3] + a->M[0][1] * b->M[1][3] + a->M[0][2] * b->M[2][3] +
+                  a->M[0][3] * b->M[3][3];
+    out.M[1][3] = a->M[1][0] * b->M[0][3] + a->M[1][1] * b->M[1][3] + a->M[1][2] * b->M[2][3] +
+                  a->M[1][3] * b->M[3][3];
+    out.M[2][3] = a->M[2][0] * b->M[0][3] + a->M[2][1] * b->M[1][3] + a->M[2][2] * b->M[2][3] +
+                  a->M[2][3] * b->M[3][3];
+    out.M[3][3] = a->M[3][0] * b->M[0][3] + a->M[3][1] * b->M[1][3] + a->M[3][2] * b->M[2][3] +
+                  a->M[3][3] * b->M[3][3];
+    return out;
+}
+
+ovrMatrix4f createFromQuaternion(const XrQuaternionf q) {
+    const float ww = q.w * q.w;
+    const float xx = q.x * q.x;
+    const float yy = q.y * q.y;
+    const float zz = q.z * q.z;
+
+    ovrMatrix4f out;
+    out.M[0][0] = ww + xx - yy - zz;
+    out.M[0][1] = 2 * (q.x * q.y - q.w * q.z);
+    out.M[0][2] = 2 * (q.x * q.z + q.w * q.y);
+    out.M[0][3] = 0;
+
+    out.M[1][0] = 2 * (q.x * q.y + q.w * q.z);
+    out.M[1][1] = ww - xx + yy - zz;
+    out.M[1][2] = 2 * (q.y * q.z - q.w * q.x);
+    out.M[1][3] = 0;
+
+    out.M[2][0] = 2 * (q.x * q.z - q.w * q.y);
+    out.M[2][1] = 2 * (q.y * q.z + q.w * q.x);
+    out.M[2][2] = ww - xx - yy + zz;
+    out.M[2][3] = 0;
+
+    out.M[3][0] = 0;
+    out.M[3][1] = 0;
+    out.M[3][2] = 0;
+    out.M[3][3] = 1;
+    return out;
+}
+
+ovrMatrix4f createTranslation(const float x, const float y, const float z) {
+    ovrMatrix4f out;
+    out.M[0][0] = 1.0f;
+    out.M[0][1] = 0.0f;
+    out.M[0][2] = 0.0f;
+    out.M[0][3] = x;
+    out.M[1][0] = 0.0f;
+    out.M[1][1] = 1.0f;
+    out.M[1][2] = 0.0f;
+    out.M[1][3] = y;
+    out.M[2][0] = 0.0f;
+    out.M[2][1] = 0.0f;
+    out.M[2][2] = 1.0f;
+    out.M[2][3] = z;
+    out.M[3][0] = 0.0f;
+    out.M[3][1] = 0.0f;
+    out.M[3][2] = 0.0f;
+    out.M[3][3] = 1.0f;
+    return out;
+}
+
+ovrMatrix4f getTransformFromPose(const XrPosef pose) {
+    const ovrMatrix4f rotation = createFromQuaternion(pose.orientation);
+    const ovrMatrix4f translation = createTranslation(pose.position.x, pose.position.y,
+                                                      pose.position.z);
+    return multiply(&translation, &rotation);
+}
+
+cxrMatrix34 cxrConvert(const ovrMatrix4f &m) {
+    cxrMatrix34 out{};
+    // The matrices are compatible so doing a memcpy() here
+    //  noting that we are a [3][4] and ovr uses [4][4]
+    memcpy(&out, &m, sizeof(out));
+    return out;
+}
+
+void updateTrackingState(cxrVRTrackingState *trackingState) {
+    XrSpaceLocation location;
+    if (pOpenXr->getLocateSpace(&location) == XR_SUCCESS) {
+        cxrVRTrackingState TrackingState = {};
+        TrackingState.hmd.pose.deviceToAbsoluteTracking =
+                cxrConvert(getTransformFromPose(location.pose));
+        TrackingState.hmd.pose.poseIsValid = cxrTrue;
+        TrackingState.hmd.pose.deviceIsConnected = cxrTrue;
+        TrackingState.hmd.pose.trackingResult = cxrTrackingResult_Running_OK;
+        if (trackingState != nullptr) {
+            *trackingState = TrackingState;
+        }
+    }
+}
 
 void onDraw(uint32_t eye) {
     graphicRender.draw(eye);
@@ -25,7 +148,7 @@ void gl_main() {
     ALOGD("window (%d, %d)", eglHelper.getWidth(), eglHelper.getHeight());
     graphicRender.initialize(eglHelper.getWidth(), eglHelper.getHeight());
 
-    cloudXr.connect("-s 192.168.1.106");
+    cloudXr.connect("-s 192.168.1.106", updateTrackingState);
     pOpenXr->initialize(gNativeWindow, onDraw);
     cxrFramesLatched framesLatched;
     while (!quit) {
@@ -39,7 +162,7 @@ void gl_main() {
         }
         if (cloudxrPrepared) cloudXr.postRender(framesLatched);
         pOpenXr->render();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
     }
     eglHelper.release();
     ALOGD("----- exit gl thread -----");

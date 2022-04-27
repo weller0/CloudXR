@@ -9,9 +9,11 @@
 using namespace std;
 
 namespace ssnwt {
+    typedef void (*update_tracking_state_call_back)(cxrVRTrackingState *);
+
     class CloudXR {
     public:
-        int connect(const char *cmdLine);
+        int connect(const char *cmdLine, update_tracking_state_call_back cb);
 
         int disconnect();
 
@@ -45,6 +47,8 @@ namespace ssnwt {
         cxrClientState clientState = cxrClientState_ReadyToConnect;
         cxrStateReason clientStateReason = cxrStateReason_NoError;
         uint64_t connectionFlags = cxrConnectionFlags_ConnectAsync;
+
+        update_tracking_state_call_back updateTrackingStateCallBack{0};
     };
 } // end namespace ssnwt
 

@@ -33,7 +33,7 @@ namespace ssnwt {
 
         XrInstanceCreateInfo createInfo{XR_TYPE_INSTANCE_CREATE_INFO};
         createInfo.next = (XrBaseInStructure *) &instanceCreateInfoAndroid;
-        createInfo.enabledExtensionCount = extensions.size();
+        createInfo.enabledExtensionCount = (uint32_t)extensions.size();
         createInfo.enabledExtensionNames = extensions.data();
         strcpy(createInfo.applicationInfo.applicationName, "HelloXR");
         createInfo.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
@@ -571,10 +571,8 @@ namespace ssnwt {
 
         std::vector<XrCompositionLayerBaseHeader *> layers;
         XrCompositionLayerProjection layer{XR_TYPE_COMPOSITION_LAYER_PROJECTION};
-        std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
         if (frameState.shouldRender == XR_TRUE) {
-            if (RenderLayer(frameState.predictedDisplayTime, projectionLayerViews,
-                            layer)) {
+            if (RenderLayer(frameState.predictedDisplayTime, layer)) {
                 layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader *>(&layer));
             }
         }
@@ -589,11 +587,9 @@ namespace ssnwt {
         return XR_SUCCESS;
     }
 
-    bool OpenXR::RenderLayer(XrTime predictedDisplayTime,
-                             std::vector<XrCompositionLayerProjectionView> &projectionLayerViews,
-                             XrCompositionLayerProjection &layer) {
+    bool OpenXR::RenderLayer(XrTime predictedDisplayTime, XrCompositionLayerProjection &layer) {
         XrResult res;
-
+        std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
         XrViewState viewState{XR_TYPE_VIEW_STATE};
         uint32_t viewCapacityInput = (uint32_t) m_views.size();
         uint32_t viewCountOutput;

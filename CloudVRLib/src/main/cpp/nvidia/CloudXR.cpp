@@ -39,7 +39,8 @@ const char *StateReasonEnumToString(cxrStateReason reason) {
 #undef CASE
 
 namespace ssnwt {
-    int CloudXR::connect(const char *cmdLine) {
+    int CloudXR::connect(const char *cmdLine, update_tracking_state_call_back cb) {
+        updateTrackingStateCallBack = cb;
         GOptions.ParseString(cmdLine);
         ALOGV("[CloudXR]mServerIP %s", GOptions.mServerIP.c_str());
         deviceDesc = getDeviceDesc();
@@ -125,9 +126,9 @@ namespace ssnwt {
     }
 
     cxrDeviceDesc CloudXR::getDeviceDesc() {
-        int dispW = 4320;
-        int dispH = 2160;
-        int fovX = 105, fovY = 105;
+        uint32_t dispW = 4320;
+        uint32_t dispH = 2160;
+        uint32_t fovX = 105, fovY = 105;
         float playX = 1, playZ = 1; // 半径1米
         cxrDeviceDesc desc = {};
         desc.width = dispW / 2;
@@ -141,17 +142,18 @@ namespace ssnwt {
         desc.fps = 72;
         desc.ipd = 0.064f;
         desc.predOffset = 0.02f;
-        desc.receiveAudio = GOptions.mReceiveAudio;
-        desc.sendAudio = GOptions.mSendAudio;
+        desc.receiveAudio = static_cast<cxrBool>(GOptions.mReceiveAudio);
+        desc.sendAudio = static_cast<cxrBool>(GOptions.mSendAudio);
         desc.posePollFreq = 0;
-        desc.disablePosePrediction = false;
-        desc.angularVelocityInDeviceSpace = false;
-        desc.foveatedScaleFactor = (GOptions.mFoveation < 100) ? GOptions.mFoveation : 0;
+        desc.disablePosePrediction = cxrTrue;
+        desc.angularVelocityInDeviceSpace = cxrFalse;
+        desc.foveatedScaleFactor = static_cast<uint32_t>((GOptions.mFoveation < 100)
+                                                         ? GOptions.mFoveation : 0);
         // if we have touch controller use Oculus type, else use Vive as more close to 3dof remotes
         desc.ctrlType = cxrControllerType_OculusTouch;
 
-        const float halfFOVTanX = tanf(M_PI / 360.f * fovX);
-        const float halfFOVTanY = tanf(M_PI / 360.f * fovY);
+        const float halfFOVTanX = tanf(static_cast<float>(M_PI / 360.f * fovX));
+        const float halfFOVTanY = tanf(static_cast<float>(M_PI / 360.f * fovY));
 
         desc.proj[0][0] = -halfFOVTanX;
         desc.proj[0][1] = halfFOVTanX;
@@ -194,7 +196,10 @@ namespace ssnwt {
     }
 
     void CloudXR::getTrackingState(cxrVRTrackingState *trackingState) {
-        cxrVRTrackingState TrackingState = {};
+        if (updateTrackingStateCallBack) {
+            updateTrackingStateCallBack(trackingState);
+        }
+        /*cxrVRTrackingState TrackingState = {};
         // 旋转\位移矩阵
         //memcpy(&TrackingState.hmd.pose.deviceToAbsoluteTracking,
         //       &deviceToAbsoluteTracking, sizeof(cxrMatrix34));
@@ -223,7 +228,7 @@ namespace ssnwt {
 
         if (trackingState != nullptr) {
             *trackingState = TrackingState;
-        }
+        }*/
     }
 
     void CloudXR::triggerHaptic(const cxrHapticFeedback *hapticFeedback) {

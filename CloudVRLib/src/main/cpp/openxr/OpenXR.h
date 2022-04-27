@@ -54,6 +54,7 @@ struct InputState {
 
 namespace ssnwt {
     typedef void (*draw_frame_call_back)(uint32_t);
+
     class OpenXR {
     public:
         OpenXR(JavaVM *vm, jobject activity);
@@ -68,12 +69,14 @@ namespace ssnwt {
 
         XrResult release();
 
+        XrResult getLocateSpace(XrSpaceLocation *location) {
+            return xrLocateSpace(m_appSpace, m_appSpace, 0, location);
+        }
+
     private:
         const XrEventDataBaseHeader *tryReadNextEvent();
 
-        bool RenderLayer(XrTime predictedDisplayTime,
-                         std::vector<XrCompositionLayerProjectionView> &projectionLayerViews,
-                         XrCompositionLayerProjection &layer);
+        bool RenderLayer(XrTime predictedDisplayTime, XrCompositionLayerProjection &layer);
 
         void RenderView(XrRect2Di imageRect, const uint32_t colorTexture);
 
