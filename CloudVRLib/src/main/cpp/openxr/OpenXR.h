@@ -12,7 +12,7 @@
 #include <array>
 #include <map>
 #include <list>
-#include "GraphicRender.h"
+#include <CloudXRCommon.h>
 
 namespace Side {
     const int LEFT = 0;
@@ -48,8 +48,6 @@ struct InputState {
     std::array<XrPath, Side::COUNT> handSubactionPath;
     XrPath headSubactionPath;
     std::array<XrSpace, Side::COUNT> handSpace;
-    std::array<float, Side::COUNT> handScale = {{1.0f, 1.0f}};
-    std::array<XrBool32, Side::COUNT> handActive;
 };
 
 namespace ssnwt {
@@ -84,7 +82,8 @@ namespace ssnwt {
             return xrSyncActions(m_session, &syncInfo);
         }
 
-        XrResult getControllerState();
+        XrResult getControllerState(uint32_t side, uint32_t *booleanComps,
+                                    uint32_t *booleanCompsChanged, float *scalarComps);
 
     private:
         const XrEventDataBaseHeader *tryReadNextEvent();

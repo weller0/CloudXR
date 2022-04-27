@@ -344,20 +344,21 @@ namespace ssnwt {
                         xrStringToPath(m_instance,
                                        "/interaction_profiles/skyworth/touch_controller",
                                        &skyworthTouchInteractionProfilePath));
-                std::vector<XrActionSuggestedBinding> bindings{{
-                                                                       {m_input.primaryButtonAction, primaryButtonPath[Side::LEFT]},
-                                                                       {m_input.primaryButtonAction, primaryButtonPath[Side::RIGHT]},
-                                                                       {m_input.primaryTouchAction, primaryTouchPath[Side::LEFT]},
-                                                                       {m_input.primaryTouchAction, primaryTouchPath[Side::RIGHT]},
-                                                                       {m_input.secondaryButtonAction, secondaryButtonPath[Side::LEFT]},
-                                                                       {m_input.secondaryButtonAction, secondaryButtonPath[Side::RIGHT]},
-                                                                       {m_input.secondaryTouchAction, secondaryTouchedPath[Side::LEFT]},
-                                                                       {m_input.secondaryTouchAction, secondaryTouchedPath[Side::RIGHT]},
-                                                                       {m_input.menuAction, menuClickPath[Side::LEFT]},
-                                                                       {m_input.menuAction, menuClickPath[Side::RIGHT]},
-                                                                       {m_input.poseAction, posePath[Side::LEFT]},
-                                                                       {m_input.poseAction, posePath[Side::RIGHT]},
-                                                               }};
+                std::vector<XrActionSuggestedBinding> bindings{
+                        {
+                                {m_input.primaryButtonAction, primaryButtonPath[Side::LEFT]},
+                                {m_input.primaryButtonAction, primaryButtonPath[Side::RIGHT]},
+                                {m_input.primaryTouchAction, primaryTouchPath[Side::LEFT]},
+                                {m_input.primaryTouchAction, primaryTouchPath[Side::RIGHT]},
+                                {m_input.secondaryButtonAction, secondaryButtonPath[Side::LEFT]},
+                                {m_input.secondaryButtonAction, secondaryButtonPath[Side::RIGHT]},
+                                {m_input.secondaryTouchAction, secondaryTouchedPath[Side::LEFT]},
+                                {m_input.secondaryTouchAction, secondaryTouchedPath[Side::RIGHT]},
+                                {m_input.menuAction, menuClickPath[Side::LEFT]},
+                                {m_input.menuAction, menuClickPath[Side::RIGHT]},
+                                {m_input.poseAction, posePath[Side::LEFT]},
+                                {m_input.poseAction, posePath[Side::RIGHT]},
+                        }};
                 XrInteractionProfileSuggestedBinding suggestedBindings{
                         XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
                 suggestedBindings.interactionProfile = skyworthTouchInteractionProfilePath;
@@ -548,172 +549,150 @@ namespace ssnwt {
         }
     }
 
-    XrResult OpenXR::getControllerState() {
-        /*m_input.handActive = {XR_FALSE, XR_FALSE};
-        // Sync actions
-        const XrActiveActionSet activeActionSet{m_input.actionSet, XR_NULL_PATH};
-        XrActionsSyncInfo syncInfo{XR_TYPE_ACTIONS_SYNC_INFO};
-        syncInfo.countActiveActionSets = 1;
-        syncInfo.activeActionSets = &activeActionSet;
-        OPENXR_CHECK(xrSyncActions(m_session, &syncInfo));
+    XrResult OpenXR::getControllerState(uint32_t side, uint32_t *booleanComps,
+                                        uint32_t *booleanCompsChanged, float *scalarComps) {
+        const uint32_t priorCompsState = *booleanComps;
 
-        // Get pose and grab action state
-        for (auto hand : {Side::LEFT, Side::RIGHT}) {
-            Controller *s_Controller;
-            if (hand == Side::LEFT)
-                s_Controller = &s_InputProvider->Leftcontroller;
-            else
-                s_Controller = &s_InputProvider->Rightcontroller;
-            XrActionStateGetInfo getInfo{XR_TYPE_ACTION_STATE_GET_INFO};
-            getInfo.subactionPath = m_input.handSubactionPath[hand];
+        XrActionStateGetInfo getInfo{XR_TYPE_ACTION_STATE_GET_INFO};
+        getInfo.subactionPath = m_input.handSubactionPath[side];
 
-            getInfo.action = m_input.primaryButtonAction;
-            XrActionStateBoolean primaryButtonValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &primaryButtonValue));
-            if (primaryButtonValue.isActive == XR_TRUE && primaryButtonValue.currentState) {
-                s_Controller->keyCode |= GSXRMaskFromId(xrButton_PrimaryButton);
-            } else {
-                if (s_Controller->keyCode & GSXRMaskFromId(xrButton_PrimaryButton)) {
-                    s_Controller->keyCode ^= GSXRMaskFromId(xrButton_PrimaryButton);
-                }
-            }
+        getInfo.action = m_input.poseAction;
+        XrActionStatePose poseState{XR_TYPE_ACTION_STATE_POSE};
+        OPENXR_CHECK(xrGetActionStatePose(m_session, &getInfo, &poseState));
+        if (poseState.isActive == XR_FALSE) return XR_EVENT_UNAVAILABLE;
 
-            getInfo.action = m_input.primaryTouchAction;
-            XrActionStateBoolean primaryTouchValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &primaryTouchValue));
-            if (primaryTouchValue.isActive == XR_TRUE && primaryTouchValue.currentState) {
-                s_Controller->keyCode |= GSXRMaskFromId(xrButton_PrimaryTouched);
-            } else {
-                if (s_Controller->keyCode & GSXRMaskFromId(xrButton_PrimaryTouched)) {
-                    s_Controller->keyCode ^= GSXRMaskFromId(xrButton_PrimaryTouched);
-                }
-            }
-
-            getInfo.action = m_input.secondaryButtonAction;
-            XrActionStateBoolean secondaryButtonValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &secondaryButtonValue));
-            if (secondaryButtonValue.isActive == XR_TRUE && secondaryButtonValue.currentState) {
-                s_Controller->keyCode |= GSXRMaskFromId(xrButton_SecondaryButton);
-            } else {
-                if (s_Controller->keyCode & GSXRMaskFromId(xrButton_SecondaryButton)) {
-                    s_Controller->keyCode ^= GSXRMaskFromId(xrButton_SecondaryButton);
-                }
-            }
-
-            getInfo.action = m_input.secondaryTouchAction;
-            XrActionStateBoolean secondaryTouchValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &secondaryTouchValue));
-            if (secondaryTouchValue.isActive == XR_TRUE && secondaryTouchValue.currentState) {
-                s_Controller->keyCode |= GSXRMaskFromId(xrButton_SecondaryTouched);
-            } else {
-                if (s_Controller->keyCode & GSXRMaskFromId(xrButton_SecondaryTouched)) {
-                    s_Controller->keyCode ^= GSXRMaskFromId(xrButton_SecondaryTouched);
-                }
-            }
-
-            getInfo.action = m_input.gripPressedAction;
-            XrActionStateBoolean gripPressedValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &gripPressedValue));
-            if (gripPressedValue.isActive == XR_TRUE && gripPressedValue.currentState) {
-                s_Controller->keyCode |= GSXRMaskFromId(xrButton_GripPress);
-            } else {
-                if (s_Controller->keyCode & GSXRMaskFromId(xrButton_GripPress)) {
-                    s_Controller->keyCode ^= GSXRMaskFromId(xrButton_GripPress);
-                }
-            }
-
-            getInfo.action = m_input.menuAction;
-            XrActionStateBoolean menuValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &menuValue));
-            if (menuValue.isActive == XR_TRUE && menuValue.currentState) {
-                s_Controller->keyCode |= GSXRMaskFromId(xrButton_Menu);
-            } else {
-                if (s_Controller->keyCode & GSXRMaskFromId(xrButton_Menu)) {
-                    s_Controller->keyCode ^= GSXRMaskFromId(xrButton_Menu);
-                }
-            }
-
-            getInfo.action = m_input.triggerPressedAction;
-            XrActionStateBoolean triggerPressedValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &triggerPressedValue));
-            if (triggerPressedValue.isActive == XR_TRUE && triggerPressedValue.currentState) {
-                s_Controller->keyCode |= GSXRMaskFromId(xrButton_TriggerPress);
-            } else {
-                if (s_Controller->keyCode & GSXRMaskFromId(xrButton_TriggerPress)) {
-                    s_Controller->keyCode ^= GSXRMaskFromId(xrButton_TriggerPress);
-                }
-            }
-
-            getInfo.action = m_input.triggerTouchedAction;
-            XrActionStateBoolean triggerTouchedValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &triggerTouchedValue));
-            if (triggerTouchedValue.isActive == XR_TRUE && triggerTouchedValue.currentState) {
-                s_Controller->keyCode |= GSXRMaskFromId(xrButton_TriggerTouched);
-            } else {
-                if (s_Controller->keyCode & GSXRMaskFromId(xrButton_TriggerTouched)) {
-                    s_Controller->keyCode ^= GSXRMaskFromId(xrButton_TriggerTouched);
-                }
-            }
-
-            getInfo.action = m_input.thumbstickClickedAction;
-            XrActionStateBoolean thumbstickClickedValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &thumbstickClickedValue));
-            if (thumbstickClickedValue.isActive == XR_TRUE && thumbstickClickedValue.currentState) {
-                s_Controller->keyCode |= GSXRMaskFromId(xrButton_ThumbstickClick);
-            } else {
-                if (s_Controller->keyCode & GSXRMaskFromId(xrButton_ThumbstickClick)) {
-                    s_Controller->keyCode ^= GSXRMaskFromId(xrButton_ThumbstickClick);
-                }
-            }
-
-            getInfo.action = m_input.thumbstickTouchedAction;
-            XrActionStateBoolean thumbstickTouchedValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &thumbstickTouchedValue));
-            if (thumbstickTouchedValue.isActive == XR_TRUE && thumbstickTouchedValue.currentState) {
-                s_Controller->keyCode |= GSXRMaskFromId(xrButton_Thumbsticktouched);
-            } else {
-                if (s_Controller->keyCode & GSXRMaskFromId(xrButton_Thumbsticktouched)) {
-                    s_Controller->keyCode ^= GSXRMaskFromId(xrButton_Thumbsticktouched);
-                }
-            }
-
-            getInfo.action = m_input.gripAction;
-            XrActionStateFloat gripValue{XR_TYPE_ACTION_STATE_FLOAT};
-            OPENXR_CHECK(xrGetActionStateFloat(m_session, &getInfo, &gripValue));
-            if (gripValue.isActive == XR_TRUE) {
-                s_Controller->grip = gripValue.currentState;
-            } else {
-                s_Controller->grip = 0;
-            }
-
-            getInfo.action = m_input.triggerAction;
-            XrActionStateFloat triggerValue{XR_TYPE_ACTION_STATE_FLOAT};
-            OPENXR_CHECK(xrGetActionStateFloat(m_session, &getInfo, &triggerValue));
-            if (triggerValue.isActive == XR_TRUE) {
-                s_Controller->trigger = triggerValue.currentState;
-            } else {
-                s_Controller->trigger = 0;
-            }
-
-            getInfo.action = m_input.thumbstickAction;
-            XrActionStateVector2f thumbstickValue{XR_TYPE_ACTION_STATE_VECTOR2F};
-            OPENXR_CHECK(xrGetActionStateVector2f(m_session, &getInfo, &thumbstickValue));
-            if (thumbstickValue.isActive == XR_TRUE) {
-                s_Controller->Joystick = {thumbstickValue.currentState.x,
-                                          thumbstickValue.currentState.y};
-            } else {
-                s_Controller->Joystick = {0, 0};
-            }
-
-            getInfo.action = m_input.poseAction;
-            XrActionStatePose poseState{XR_TYPE_ACTION_STATE_POSE};
-            OPENXR_CHECK(xrGetActionStatePose(m_session, &getInfo, &poseState));
-            m_input.handActive[hand] = poseState.isActive;
+        getInfo.action = m_input.primaryButtonAction;
+        XrActionStateBoolean primaryButtonValue{XR_TYPE_ACTION_STATE_BOOLEAN};
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &primaryButtonValue));
+        if (primaryButtonValue.isActive == XR_TRUE && primaryButtonValue.currentState) {
+            *booleanComps |= ButtonMaskFromId(cxrButton_A);
+        } else if (*booleanComps & ButtonMaskFromId(cxrButton_A)) {
+            *booleanComps ^= ButtonMaskFromId(cxrButton_A);
         }
 
-        s_InputProvider->Leftcontroller.isTracked = m_input.handActive[Side::LEFT];
-        s_InputProvider->Rightcontroller.isTracked = m_input.handActive[Side::RIGHT];
-        */
+        getInfo.action = m_input.secondaryButtonAction;
+        XrActionStateBoolean secondaryButtonValue{XR_TYPE_ACTION_STATE_BOOLEAN};
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &secondaryButtonValue));
+        if (secondaryButtonValue.isActive == XR_TRUE && secondaryButtonValue.currentState) {
+            *booleanComps |= ButtonMaskFromId(cxrButton_B);
+        } else if (*booleanComps & ButtonMaskFromId(cxrButton_B)) {
+            *booleanComps ^= ButtonMaskFromId(cxrButton_B);
+        }
+
+        getInfo.action = m_input.gripPressedAction;
+        XrActionStateBoolean gripPressedValue{XR_TYPE_ACTION_STATE_BOOLEAN};
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &gripPressedValue));
+        if (gripPressedValue.isActive == XR_TRUE && gripPressedValue.currentState) {
+            *booleanComps |= ButtonMaskFromId(cxrButton_Grip_Click);
+        } else if (*booleanComps & ButtonMaskFromId(cxrButton_Grip_Click)) {
+            *booleanComps ^= ButtonMaskFromId(cxrButton_Grip_Click);
+            scalarComps[cxrAnalog_Grip] = 0;
+        }
+
+        getInfo.action = m_input.menuAction;
+        XrActionStateBoolean menuValue{XR_TYPE_ACTION_STATE_BOOLEAN};
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &menuValue));
+        if (menuValue.isActive == XR_TRUE && menuValue.currentState) {
+            *booleanComps |= ButtonMaskFromId(cxrButton_System);
+        } else if (*booleanComps & ButtonMaskFromId(cxrButton_System)) {
+            *booleanComps ^= ButtonMaskFromId(cxrButton_System);
+        }
+
+        getInfo.action = m_input.triggerPressedAction;
+        XrActionStateBoolean triggerPressedValue{XR_TYPE_ACTION_STATE_BOOLEAN};
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &triggerPressedValue));
+        if (triggerPressedValue.isActive == XR_TRUE && triggerPressedValue.currentState) {
+            *booleanComps |= ButtonMaskFromId(cxrButton_Trigger_Click);
+        } else if (*booleanComps & ButtonMaskFromId(cxrButton_Trigger_Click)) {
+            *booleanComps ^= ButtonMaskFromId(cxrButton_Trigger_Click);
+            scalarComps[cxrAnalog_Trigger] = 0;
+        }
+
+        getInfo.action = m_input.thumbstickClickedAction;
+        XrActionStateBoolean thumbstickClickedValue{XR_TYPE_ACTION_STATE_BOOLEAN};
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &thumbstickClickedValue));
+        if (thumbstickClickedValue.isActive == XR_TRUE && thumbstickClickedValue.currentState) {
+            *booleanComps |= ButtonMaskFromId(cxrButton_Joystick_Click);
+        } else if (*booleanComps & ButtonMaskFromId(cxrButton_Joystick_Click)) {
+            *booleanComps ^= ButtonMaskFromId(cxrButton_Joystick_Click);
+            scalarComps[cxrAnalog_TouchpadX] = 0;
+            scalarComps[cxrAnalog_TouchpadY] = 0;
+        }
+
+        getInfo.action = m_input.thumbstickTouchedAction;
+        XrActionStateBoolean thumbstickTouchedValue{XR_TYPE_ACTION_STATE_BOOLEAN};
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &thumbstickTouchedValue));
+        if (thumbstickTouchedValue.isActive == XR_TRUE && thumbstickTouchedValue.currentState) {
+            *booleanComps |= ButtonMaskFromId(cxrButton_Joystick_Touch);
+        } else {
+            if (*booleanComps & ButtonMaskFromId(cxrButton_Joystick_Touch)) {
+                *booleanComps ^= ButtonMaskFromId(cxrButton_Joystick_Touch);
+            }
+        }
+
+        getInfo.action = m_input.triggerTouchedAction;
+        XrActionStateBoolean triggerTouchedValue{XR_TYPE_ACTION_STATE_BOOLEAN};
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &triggerTouchedValue));
+        if (triggerTouchedValue.isActive == XR_TRUE && triggerTouchedValue.currentState) {
+            *booleanComps |= ButtonMaskFromId(cxrButton_Trigger_Touch);
+        } else {
+            if (*booleanComps & ButtonMaskFromId(cxrButton_Trigger_Touch)) {
+                *booleanComps ^= ButtonMaskFromId(cxrButton_Trigger_Touch);
+            }
+        }
+
+        getInfo.action = m_input.secondaryTouchAction;
+        XrActionStateBoolean secondaryTouchValue{XR_TYPE_ACTION_STATE_BOOLEAN};
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &secondaryTouchValue));
+        if (secondaryTouchValue.isActive == XR_TRUE && secondaryTouchValue.currentState) {
+            *booleanComps |= ButtonMaskFromId(xrButton_SecondaryTouched);
+        } else {
+            if (*booleanComps & ButtonMaskFromId(xrButton_SecondaryTouched)) {
+                *booleanComps ^= ButtonMaskFromId(xrButton_SecondaryTouched);
+            }
+        }
+
+        getInfo.action = m_input.primaryTouchAction;
+        XrActionStateBoolean primaryTouchValue{XR_TYPE_ACTION_STATE_BOOLEAN};
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &primaryTouchValue));
+        if (primaryTouchValue.isActive == XR_TRUE && primaryTouchValue.currentState) {
+            *booleanComps |= ButtonMaskFromId(cxrButton_B);
+        } else {
+            if (*booleanComps & ButtonMaskFromId(cxrButton_B)) {
+                *booleanComps ^= ButtonMaskFromId(cxrButton_B);
+            }
+        }
+
+        getInfo.action = m_input.gripAction;
+        XrActionStateFloat gripValue{XR_TYPE_ACTION_STATE_FLOAT};
+        OPENXR_CHECK(xrGetActionStateFloat(m_session, &getInfo, &gripValue));
+        if (gripValue.isActive == XR_TRUE) {
+            scalarComps[cxrAnalog_Grip] = gripValue.currentState;
+        } else {
+            scalarComps[cxrAnalog_Grip] = 0;
+        }
+
+        getInfo.action = m_input.triggerAction;
+        XrActionStateFloat triggerValue{XR_TYPE_ACTION_STATE_FLOAT};
+        OPENXR_CHECK(xrGetActionStateFloat(m_session, &getInfo, &triggerValue));
+        if (triggerValue.isActive == XR_TRUE) {
+            scalarComps[cxrAnalog_Trigger] = triggerValue.currentState;
+        } else {
+            scalarComps[cxrAnalog_Trigger] = 0;
+        }
+
+        getInfo.action = m_input.thumbstickAction;
+        XrActionStateVector2f thumbstickValue{XR_TYPE_ACTION_STATE_VECTOR2F};
+        OPENXR_CHECK(xrGetActionStateVector2f(m_session, &getInfo, &thumbstickValue));
+        if (thumbstickValue.isActive == XR_TRUE) {
+            scalarComps[cxrAnalog_TouchpadX] = thumbstickValue.currentState.x;
+            scalarComps[cxrAnalog_TouchpadY] = thumbstickValue.currentState.y;
+        } else {
+            scalarComps[cxrAnalog_TouchpadX] = 0;
+            scalarComps[cxrAnalog_TouchpadY] = 0;
+        }
+        // update changed flags based on change in comps, as XOR of prior state and new state.
+        *booleanCompsChanged = priorCompsState ^ (*booleanComps);
         return XR_SUCCESS;
     }
 

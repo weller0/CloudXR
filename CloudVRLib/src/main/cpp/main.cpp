@@ -140,12 +140,21 @@ void updateTrackingState(cxrVRTrackingState *trackingState) {
     if (pOpenXr->syncAction() == XR_SUCCESS) {
         for (uint32_t eye = 0; eye < CXR_NUM_CONTROLLERS; eye++) {
             if (pOpenXr->getControllerSpace(eye, &location) == XR_SUCCESS) {
-                ALOGD("getControllerSpace (%0.3f, %0.3f, %0.3f, %0.3f), (%0.3f, %0.3f, %0.3f)",
-                      location.pose.orientation.x, location.pose.orientation.y,
-                      location.pose.orientation.z, location.pose.orientation.w,
-                      location.pose.position.x, location.pose.position.y, location.pose.position.z);
                 TrackingState.controller[eye].pose.deviceToAbsoluteTracking =
                         cxrConvert(getTransformFromPose(location.pose));
+
+                if (!pOpenXr->getControllerState(eye, &TrackingState.controller[eye].booleanComps,
+                                                 &TrackingState.controller[eye].booleanCompsChanged,
+                                                 TrackingState.controller[eye].scalarComps)) {
+                    ALOGD("getControllerSpace[%d] (%0.3f, %0.3f, %0.3f, %0.3f), key:%d, %d", eye,
+                          TrackingState.controller[eye].scalarComps[cxrAnalog_Grip],
+                          TrackingState.controller[eye].scalarComps[cxrAnalog_Trigger],
+                          TrackingState.controller[eye].scalarComps[cxrAnalog_TouchpadX],
+                          TrackingState.controller[eye].scalarComps[cxrAnalog_TouchpadY],
+                          TrackingState.controller[eye].booleanComps,
+                          TrackingState.controller[eye].booleanCompsChanged);
+                }
+
                 TrackingState.controller[eye].pose.poseIsValid = cxrTrue;
                 TrackingState.controller[eye].pose.deviceIsConnected = cxrTrue;
                 TrackingState.controller[eye].pose.trackingResult = cxrTrackingResult_Running_OK;
