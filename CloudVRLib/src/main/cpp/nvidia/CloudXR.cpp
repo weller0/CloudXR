@@ -39,8 +39,13 @@ const char *StateReasonEnumToString(cxrStateReason reason) {
 #undef CASE
 
 namespace ssnwt {
-    int CloudXR::connect(const char *cmdLine, update_tracking_state_call_back cb) {
-        updateTrackingStateCallBack = cb;
+    cxrError CloudXR::connect(const char *cmdLine,
+                              update_tracking_state_call_back tracking_state_cb,
+                              trigger_haptic_call_back trigger_haptic_cb,
+                              receive_user_data_call_back receive_user_data_cb) {
+        updateTrackingStateCallBack = tracking_state_cb;
+        triggerHapticCallBack = trigger_haptic_cb;
+        receiveUserDataCallBack = receive_user_data_cb;
         GOptions.ParseString(cmdLine);
         ALOGV("[CloudXR]mServerIP %s", GOptions.mServerIP.c_str());
         deviceDesc = getDeviceDesc();
@@ -84,25 +89,29 @@ namespace ssnwt {
         return cxrError_Success; //true
     }
 
-    int CloudXR::disconnect() {
+    cxrError CloudXR::disconnect() {
+        updateTrackingStateCallBack = nullptr;
+        triggerHapticCallBack = nullptr;
+        receiveUserDataCallBack = nullptr;
+        delete pAudioRender;
+        pAudioRender = nullptr;
         if (receiverHandle) {
             cxrDestroyReceiver(receiverHandle);
             receiverHandle = nullptr;
         }
-        delete pAudioRender;
-        pAudioRender = nullptr;
         return cxrError_Success; //true
     }
 
-    int CloudXR::preRender(cxrFramesLatched *framesLatched) {
+    cxrError CloudXR::preRender(cxrFramesLatched *framesLatched) {
         if (!receiverHandle) {
             ALOGE("[CloudXR]receiverHandle is null");
             return cxrError_Receiver_Invalid;
         }
-//        if (clientState != cxrClientState_StreamingSessionInProgress) {
-//            ALOGE("receiverHandle is cxrError_Streamer_Not_Ready %s", ClientStateEnumToString(clientState));
-//            return cxrError_Streamer_Not_Ready;
-//        }
+        if (clientState != cxrClientState_StreamingSessionInProgress) {
+            ALOGE("receiverHandle is cxrError_Streamer_Not_Ready %s",
+                  ClientStateEnumToString(clientState));
+            return cxrError_Streamer_Not_Ready;
+        }
 
         const uint32_t timeoutMs = 500;
         cxrError frameErr = cxrLatchFrame(receiverHandle, framesLatched,
@@ -115,17 +124,17 @@ namespace ssnwt {
         return cxrError_Success; //true
     }
 
-    int CloudXR::render(uint32_t eye, cxrFramesLatched framesLatched) {
+    cxrError CloudXR::render(uint32_t eye, cxrFramesLatched framesLatched) {
         cxrBlitFrame(receiverHandle, &framesLatched, static_cast<uint32_t>(1 << eye));
         return cxrError_Success; //true
     }
 
-    int CloudXR::postRender(cxrFramesLatched framesLatched) {
+    cxrError CloudXR::postRender(cxrFramesLatched framesLatched) {
         cxrReleaseFrame(receiverHandle, &framesLatched);
         return cxrError_Success; //true
     }
 
-    cxrDeviceDesc CloudXR::getDeviceDesc() {
+    cxrDeviceDesc CloudXR::getDeviceDesc() const {
         uint32_t dispW = 4320;
         uint32_t dispH = 2160;
         uint32_t fovX = 105, fovY = 105;
@@ -199,40 +208,10 @@ namespace ssnwt {
         if (updateTrackingStateCallBack) {
             updateTrackingStateCallBack(trackingState);
         }
-        /*cxrVRTrackingState TrackingState = {};
-        // 旋转\位移矩阵
-        //memcpy(&TrackingState.hmd.pose.deviceToAbsoluteTracking,
-        //       &deviceToAbsoluteTracking, sizeof(cxrMatrix34));
-        // 速度
-        //TrackingState.hmd.pose.velocity = {0, 0, 0,};
-        // 角速度
-        //TrackingState.hmd.pose.angularVelocity = {0.065, -0.001, 0.010};
-        TrackingState.hmd.pose = readImu();
-        TrackingState.hmd.pose.poseIsValid = cxrTrue;
-        TrackingState.hmd.pose.deviceIsConnected = cxrTrue;
-        TrackingState.hmd.pose.trackingResult = cxrTrackingResult_Running_OK;
-
-//        TrackingState.controller[0].pose.deviceToAbsoluteTracking = {};
-//        TrackingState.controller[0].pose.velocity = {0, 0, 0,};
-//        TrackingState.controller[0].pose.angularVelocity = {0, 0, 0,};
-//        TrackingState.controller[0].pose.poseIsValid = cxrTrue;
-//        TrackingState.controller[0].pose.deviceIsConnected = cxrTrue;
-//        TrackingState.controller[0].pose.trackingResult = cxrTrackingResult_Running_OK;
-//
-//        TrackingState.controller[1].pose.deviceToAbsoluteTracking = {};
-//        TrackingState.controller[1].pose.velocity = {0, 0, 0,};
-//        TrackingState.controller[1].pose.angularVelocity = {0, 0, 0,};
-//        TrackingState.controller[1].pose.poseIsValid = cxrTrue;
-//        TrackingState.controller[1].pose.deviceIsConnected = cxrTrue;
-//        TrackingState.controller[1].pose.trackingResult = cxrTrackingResult_Running_OK;
-
-        if (trackingState != nullptr) {
-            *trackingState = TrackingState;
-        }*/
     }
 
     void CloudXR::triggerHaptic(const cxrHapticFeedback *hapticFeedback) {
-        ALOGD("[CloudXR]triggerHaptic");
+        if (triggerHapticCallBack) triggerHapticCallBack(hapticFeedback);
     }
 
     cxrBool CloudXR::renderAudio(const cxrAudioFrame *audioFrame) {
@@ -240,20 +219,21 @@ namespace ssnwt {
         if (pAudioRender) {
             const uint32_t timeout = audioFrame->streamSizeBytes / CXR_AUDIO_BYTES_PER_MS;
             const uint32_t numFrames = timeout * CXR_AUDIO_SAMPLING_RATE / 1000;
-            pAudioRender->write(audioFrame->streamBuffer, numFrames, timeout * 1000 * 1000);
+            pAudioRender->write(audioFrame->streamBuffer, (int32_t) numFrames,
+                                timeout * 1000 * 1000);
+            return cxrTrue;
         }
-        return cxrTrue;
+        return cxrFalse;
     }
 
     void CloudXR::receiveUserData(const void *data, uint32_t size) {
-        ALOGD("[CloudXR]receiveUserData size:%d", size);
+        if (receiveUserDataCallBack) receiveUserDataCallBack(data, size);
     }
 
     void CloudXR::updateClientState(cxrClientState state, cxrStateReason reason) {
         ALOGD("[CloudXR]updateClientState state:%s, reason:%s",
               ClientStateEnumToString(state), StateReasonEnumToString(reason));
         clientState = state;
-        clientStateReason = reason;
     }
 
 } // end namespace ssnwt

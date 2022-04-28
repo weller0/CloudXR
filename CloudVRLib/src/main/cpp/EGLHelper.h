@@ -13,8 +13,6 @@ namespace ssnwt {
 
         bool isValid() { return mContext != 0 && mSurface != 0; }
 
-        void swapBuffer();
-
         EGLint getWidth() { return mWidth; }
 
         EGLint getHeight() { return mHeight; }
@@ -23,7 +21,6 @@ namespace ssnwt {
         EGLDisplay mDisplay = 0;
         EGLContext mContext = 0;
         EGLSurface mSurface = 0;
-        EGLConfig mConfig = 0;
         EGLint mWidth = 0, mHeight = 0;
     };
 }

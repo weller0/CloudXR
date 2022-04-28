@@ -1,6 +1,3 @@
-//
-// Created by arena on 2022-4-24.
-//
 #include <EGL/egl.h>
 #include <GLES3/gl32.h>
 #include <vector>
@@ -123,14 +120,6 @@ namespace ssnwt {
                                             &m_input.primaryButtonAction));
 
                 actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-                strcpy_s(actionInfo.actionName, "primarytouched");
-                strcpy_s(actionInfo.localizedActionName, "Primary Touched");
-                actionInfo.countSubactionPaths = uint32_t(m_input.handSubactionPath.size());
-                actionInfo.subactionPaths = m_input.handSubactionPath.data();
-                OPENXR_CHECK(xrCreateAction(m_input.actionSet, &actionInfo,
-                                            &m_input.primaryTouchAction));
-
-                actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
                 strcpy_s(actionInfo.actionName, "secondarybutton");
                 strcpy_s(actionInfo.localizedActionName, "Secondary Button");
                 actionInfo.countSubactionPaths = uint32_t(m_input.handSubactionPath.size());
@@ -138,13 +127,6 @@ namespace ssnwt {
                 OPENXR_CHECK(xrCreateAction(m_input.actionSet, &actionInfo,
                                             &m_input.secondaryButtonAction));
 
-                actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-                strcpy_s(actionInfo.actionName, "secondarytouched");
-                strcpy_s(actionInfo.localizedActionName, "Secondary Touched");
-                actionInfo.countSubactionPaths = uint32_t(m_input.handSubactionPath.size());
-                actionInfo.subactionPaths = m_input.handSubactionPath.data();
-                OPENXR_CHECK(xrCreateAction(m_input.actionSet, &actionInfo,
-                                            &m_input.secondaryTouchAction));
 
                 actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
                 strcpy_s(actionInfo.actionName, "grippressed");
@@ -271,19 +253,19 @@ namespace ssnwt {
 
             // Suggest bindings for the Oculus Touch.
             {
-                std::array<XrPath, Side::COUNT> primaryButtonPath;
-                std::array<XrPath, Side::COUNT> primaryTouchPath;
-                std::array<XrPath, Side::COUNT> secondaryButtonPath;
-                std::array<XrPath, Side::COUNT> secondaryTouchedPath;
-                std::array<XrPath, Side::COUNT> menuClickPath;
-                std::array<XrPath, Side::COUNT> selectPath;
-                std::array<XrPath, Side::COUNT> squeezeValuePath;
-                std::array<XrPath, Side::COUNT> squeezeForcePath;
-                std::array<XrPath, Side::COUNT> squeezeClickPath;
-                std::array<XrPath, Side::COUNT> posePath;
-                std::array<XrPath, Side::COUNT> hapticPath;
-                std::array<XrPath, Side::COUNT> triggerValuePath;
-                std::array<XrPath, Side::COUNT> gripValuePath;
+                std::array<XrPath, Side::COUNT> primaryButtonPath{};
+                std::array<XrPath, Side::COUNT> primaryTouchPath{};
+                std::array<XrPath, Side::COUNT> secondaryButtonPath{};
+                std::array<XrPath, Side::COUNT> secondaryTouchedPath{};
+                std::array<XrPath, Side::COUNT> menuClickPath{};
+                std::array<XrPath, Side::COUNT> selectPath{};
+                std::array<XrPath, Side::COUNT> squeezeValuePath{};
+                std::array<XrPath, Side::COUNT> squeezeForcePath{};
+                std::array<XrPath, Side::COUNT> squeezeClickPath{};
+                std::array<XrPath, Side::COUNT> posePath{};
+                std::array<XrPath, Side::COUNT> hapticPath{};
+                std::array<XrPath, Side::COUNT> triggerValuePath{};
+                std::array<XrPath, Side::COUNT> gripValuePath{};
                 OPENXR_CHECK(xrStringToPath(m_instance, "/user/hand/left/input/x/click",
                                             &primaryButtonPath[Side::LEFT]));
                 OPENXR_CHECK(xrStringToPath(m_instance, "/user/hand/right/input/a/click",
@@ -348,12 +330,8 @@ namespace ssnwt {
                         {
                                 {m_input.primaryButtonAction, primaryButtonPath[Side::LEFT]},
                                 {m_input.primaryButtonAction, primaryButtonPath[Side::RIGHT]},
-                                {m_input.primaryTouchAction, primaryTouchPath[Side::LEFT]},
-                                {m_input.primaryTouchAction, primaryTouchPath[Side::RIGHT]},
                                 {m_input.secondaryButtonAction, secondaryButtonPath[Side::LEFT]},
                                 {m_input.secondaryButtonAction, secondaryButtonPath[Side::RIGHT]},
-                                {m_input.secondaryTouchAction, secondaryTouchedPath[Side::LEFT]},
-                                {m_input.secondaryTouchAction, secondaryTouchedPath[Side::RIGHT]},
                                 {m_input.menuAction, menuClickPath[Side::LEFT]},
                                 {m_input.menuAction, menuClickPath[Side::RIGHT]},
                                 {m_input.poseAction, posePath[Side::LEFT]},
@@ -444,8 +422,8 @@ namespace ssnwt {
                 swapchainCreateInfo.usageFlags =
                         XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
                 Swapchain swapchain{};
-                swapchain.width = swapchainCreateInfo.width;
-                swapchain.height = swapchainCreateInfo.height;
+                swapchain.width = (int32_t) swapchainCreateInfo.width;
+                swapchain.height = (int32_t) swapchainCreateInfo.height;
                 OPENXR_CHECK(xrCreateSwapchain(m_session, &swapchainCreateInfo, &swapchain.handle));
 
                 m_swapchains.push_back(swapchain);
@@ -494,6 +472,40 @@ namespace ssnwt {
 
     XrResult OpenXR::release() {
         ALOGD("[OpenXR]release");
+        for (auto &m_swapchain : m_swapchains) {
+            xrDestroySwapchain(m_swapchain.handle);
+        }
+        if (m_appSpace != XR_NULL_HANDLE) xrDestroySpace(m_appSpace);
+
+        xrDestroySpace(m_input.handSpace[Side::LEFT]);
+        xrDestroySpace(m_input.handSpace[Side::RIGHT]);
+
+        if (m_input.primaryButtonAction != XR_NULL_HANDLE)
+            xrDestroyAction(m_input.primaryButtonAction);
+        if (m_input.secondaryButtonAction != XR_NULL_HANDLE)
+            xrDestroyAction(m_input.secondaryButtonAction);
+        if (m_input.gripPressedAction != XR_NULL_HANDLE) xrDestroyAction(m_input.gripPressedAction);
+        if (m_input.menuAction != XR_NULL_HANDLE) xrDestroyAction(m_input.menuAction);
+        if (m_input.triggerPressedAction != XR_NULL_HANDLE)
+            xrDestroyAction(m_input.triggerPressedAction);
+        if (m_input.triggerTouchedAction != XR_NULL_HANDLE)
+            xrDestroyAction(m_input.triggerTouchedAction);
+        if (m_input.thumbstickTouchedAction != XR_NULL_HANDLE)
+            xrDestroyAction(m_input.thumbstickTouchedAction);
+        if (m_input.gripAction != XR_NULL_HANDLE) xrDestroyAction(m_input.gripAction);
+        if (m_input.triggerAction != XR_NULL_HANDLE) xrDestroyAction(m_input.triggerAction);
+        if (m_input.thumbstickAction != XR_NULL_HANDLE) xrDestroyAction(m_input.thumbstickAction);
+        if (m_input.poseAction != XR_NULL_HANDLE) xrDestroyAction(m_input.poseAction);
+        if (m_input.hapticAction != XR_NULL_HANDLE) xrDestroyAction(m_input.hapticAction);
+
+        if (m_input.EnterButtonAction != XR_NULL_HANDLE) xrDestroyAction(m_input.EnterButtonAction);
+        if (m_input.HomeButtonAction != XR_NULL_HANDLE) xrDestroyAction(m_input.HomeButtonAction);
+        if (m_input.VolumeDownAction != XR_NULL_HANDLE) xrDestroyAction(m_input.VolumeDownAction);
+        if (m_input.VolumeUpAction != XR_NULL_HANDLE) xrDestroyAction(m_input.VolumeUpAction);
+
+        if (m_input.actionSet != XR_NULL_HANDLE) xrDestroyActionSet(m_input.actionSet);
+        if (m_session != XR_NULL_HANDLE) xrDestroySession(m_session);
+        if (m_instance != XR_NULL_HANDLE) xrDestroyInstance(m_instance);
         return XR_SUCCESS;
     }
 
@@ -520,10 +532,7 @@ namespace ssnwt {
                             OPENXR_CHECK(xrEndSession(m_session));
                             break;
                         }
-                        case XR_SESSION_STATE_EXITING: {
-                            // Do not attempt to restart because user closed this session.
-                            break;
-                        }
+                        case XR_SESSION_STATE_EXITING:
                         case XR_SESSION_STATE_LOSS_PENDING: {
                             // Poll for a new instance.
                             break;
@@ -641,28 +650,6 @@ namespace ssnwt {
             }
         }
 
-        getInfo.action = m_input.secondaryTouchAction;
-        XrActionStateBoolean secondaryTouchValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &secondaryTouchValue));
-        if (secondaryTouchValue.isActive == XR_TRUE && secondaryTouchValue.currentState) {
-            *booleanComps |= ButtonMaskFromId(xrButton_SecondaryTouched);
-        } else {
-            if (*booleanComps & ButtonMaskFromId(xrButton_SecondaryTouched)) {
-                *booleanComps ^= ButtonMaskFromId(xrButton_SecondaryTouched);
-            }
-        }
-
-        getInfo.action = m_input.primaryTouchAction;
-        XrActionStateBoolean primaryTouchValue{XR_TYPE_ACTION_STATE_BOOLEAN};
-        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &primaryTouchValue));
-        if (primaryTouchValue.isActive == XR_TRUE && primaryTouchValue.currentState) {
-            *booleanComps |= ButtonMaskFromId(cxrButton_B);
-        } else {
-            if (*booleanComps & ButtonMaskFromId(cxrButton_B)) {
-                *booleanComps ^= ButtonMaskFromId(cxrButton_B);
-            }
-        }
-
         getInfo.action = m_input.gripAction;
         XrActionStateFloat gripValue{XR_TYPE_ACTION_STATE_FLOAT};
         OPENXR_CHECK(xrGetActionStateFloat(m_session, &getInfo, &gripValue));
@@ -729,7 +716,7 @@ namespace ssnwt {
         XrResult res;
         std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
         XrViewState viewState{XR_TYPE_VIEW_STATE};
-        uint32_t viewCapacityInput = (uint32_t) m_views.size();
+        auto viewCapacityInput = (uint32_t) m_views.size();
         uint32_t viewCountOutput;
 
         XrViewLocateInfo viewLocateInfo{XR_TYPE_VIEW_LOCATE_INFO};
@@ -739,7 +726,7 @@ namespace ssnwt {
 
         res = xrLocateViews(m_session, &viewLocateInfo, &viewState, viewCapacityInput,
                             &viewCountOutput, m_views.data());
-        CHECK_XRRESULT(res, "xrLocateViews");
+        CHECK_XRRESULT(res, "xrLocateViews")
         if ((viewState.viewStateFlags & XR_VIEW_STATE_POSITION_VALID_BIT) == 0 ||
             (viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_VALID_BIT) == 0) {
             return false;  // There is no valid tracking poses for the views.

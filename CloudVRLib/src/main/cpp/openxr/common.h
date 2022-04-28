@@ -5,15 +5,16 @@
 #ifndef CUBEWORLD_COMMON_H
 #define CUBEWORLD_COMMON_H
 
-#include "OpenXR.h"
 #include <string>
+#include "OpenXR.h"
 #include "log.h"
 
 static void
-XR_CheckErrors(XrResult result, const char* function, bool failOnError) {
+XR_CheckErrors(XrResult result, const char *function, bool failOnError) {
     if (XR_FAILED(result)) {
         if (failOnError) {
-            ALOGV("OpenXR error: %s\n", function);
+            ALOGE("OpenXR error: %s\n", function);
+            throw std::logic_error(function);
         } else {
             ALOGE("OpenXR error: %s\n", function);
         }
@@ -44,7 +45,7 @@ XR_CheckErrors(XrResult result, const char* function, bool failOnError) {
         }                                    \
     }
 
-#define CHECK_XRRESULT(result,msg) \
+#define CHECK_XRRESULT(result, msg) \
     {                              \
         if(result != XR_SUCCESS){ \
             ALOGE("%s error",msg);\

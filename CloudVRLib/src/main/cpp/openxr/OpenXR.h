@@ -32,9 +32,7 @@ struct InputState {
     XrAction gripPressedAction{XR_NULL_HANDLE};
     XrAction menuAction{XR_NULL_HANDLE};
     XrAction primaryButtonAction{XR_NULL_HANDLE};
-    XrAction primaryTouchAction{XR_NULL_HANDLE};
     XrAction secondaryButtonAction{XR_NULL_HANDLE};
-    XrAction secondaryTouchAction{XR_NULL_HANDLE};
     XrAction triggerPressedAction{XR_NULL_HANDLE};
     XrAction triggerTouchedAction{XR_NULL_HANDLE};
     XrAction thumbstickClickedAction{XR_NULL_HANDLE};
@@ -98,20 +96,20 @@ namespace ssnwt {
         XrSession m_session{XR_NULL_HANDLE};
         XrSpace m_appSpace{XR_NULL_HANDLE};
         XrSystemId m_systemId{XR_NULL_SYSTEM_ID};
-        ANativeWindow *p_NativeWindow;
+        ANativeWindow *p_NativeWindow{};
 
-        InputState m_input;
-        XrEventDataBuffer m_eventDataBuffer;
+        InputState m_input{};
+        XrEventDataBuffer m_eventDataBuffer{};
 
-        std::vector<XrView> m_views;
+        std::vector<XrView> m_views{};
         int64_t m_colorSwapchainFormat{-1};
-        std::vector<XrViewConfigurationView> m_configViews;
+        std::vector<XrViewConfigurationView> m_configViews{};
         std::vector<Swapchain> m_swapchains;
-        std::map<XrSwapchain, std::vector<XrSwapchainImageBaseHeader *>> m_swapchainImages;
+        std::map<XrSwapchain, std::vector<XrSwapchainImageBaseHeader *>> m_swapchainImages{};
 
         GLuint m_swapchainFramebuffer{0};
-        std::map<uint32_t, uint32_t> m_colorToDepthMap;
-        std::list<std::vector<XrSwapchainImageOpenGLESKHR>> m_swapchainImageBuffers;
+        std::map<uint32_t, uint32_t> m_colorToDepthMap{};
+        std::list<std::vector<XrSwapchainImageOpenGLESKHR>> m_swapchainImageBuffers{};
 
         draw_frame_call_back m_draw_frame_cb{0};
     };

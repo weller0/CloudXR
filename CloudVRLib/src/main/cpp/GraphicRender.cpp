@@ -18,6 +18,18 @@ namespace ssnwt {
         checkGlError("initialize");
     }
 
+    void GraphicRender::release() {
+        if (mTextureID[0] > 0 && mTextureID[1] > 0) {
+            glDeleteTextures(2, mTextureID);
+        }
+        if (mFrameBuffer[0] > 0 && mFrameBuffer[1] > 0) {
+            glDeleteFramebuffers(2, mFrameBuffer);
+        }
+        if (mProgram > 0) {
+            glDeleteProgram(mProgram);
+        }
+    }
+
     void GraphicRender::draw(const uint32_t eye) {
         glUseProgram(mProgram);
         checkGlError("glUseProgram");
@@ -44,7 +56,6 @@ namespace ssnwt {
     }
 
     bool GraphicRender::setupFrameBuffer(int32_t eye) {
-//        ALOGD("setupFrameBuffer texture:%d, frame buffer:%d", mTextureID[eye], mFrameBuffer[eye]);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFrameBuffer[eye]);
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER,
                                GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTextureID[eye], 0);
@@ -78,7 +89,7 @@ namespace ssnwt {
         return framebuffer;
     }
 
-    GLuint GraphicRender::createTexture() {
+    GLuint GraphicRender::createTexture() const {
         GLuint texture = 0;
         glGenTextures(1, &texture);
 
@@ -145,7 +156,7 @@ namespace ssnwt {
     }
 
     void GraphicRender::checkGlError(const char *op) {
-        int error;
+        uint32_t error;
         while ((error = glGetError()) != GL_NO_ERROR) {
             ALOGE("[GraphicRender]%s : glError %d", op, error);
         }

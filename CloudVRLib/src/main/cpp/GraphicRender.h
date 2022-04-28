@@ -50,7 +50,7 @@ namespace ssnwt {
 
     class GraphicRender {
     public:
-        void clear();
+        static void clear();
 
         void initialize(int32_t width, int32_t height);
 
@@ -58,39 +58,37 @@ namespace ssnwt {
 
         bool setupFrameBuffer(int32_t eye);
 
-        void bindDefaultFrameBuffer();
+        static void bindDefaultFrameBuffer();
 
-        GLuint getTextureIdL() { return mTextureID[0]; }
-
-        GLuint getTextureIdR() { return mTextureID[1]; }
+        void release();
 
     private:
-        GLuint createTexture();
+        GLuint createTexture() const;
 
-        GLuint createFrameBuffer(int32_t width, int32_t height);
+        static GLuint createFrameBuffer(int32_t width, int32_t height);
 
         void draw(const float position[], const float uv[]);
 
         void createProgram(const char *vertexSource, const char *fragmentSource);
 
-        void checkShader(GLuint shader);
+        static void checkShader(GLuint shader);
 
-        void checkProgram(GLuint prog);
+        static void checkProgram(GLuint prog);
 
-        void checkGlError(const char *op);
+        static void checkGlError(const char *op);
 
     private:
         float mMVPMatrix[16] = {1, 0, 0, 0,
                                 0, 1, 0, 0,
                                 0, 0, 1, 0,
                                 0, 0, 0, 1,};
-        int32_t mProgram;
+        GLuint mProgram;
         GLuint mTextureID[2] = {0, 0};
         GLuint mFrameBuffer[2] = {0, 0};
-        int32_t muMVPMatrixHandle;
-        int32_t maPositionHandle;
-        int32_t maTextureHandle;
-        int32_t mWidth, mHeight;
+        GLint muMVPMatrixHandle;
+        GLint maPositionHandle;
+        GLint maTextureHandle;
+        GLint mWidth, mHeight;
     };
 }
 

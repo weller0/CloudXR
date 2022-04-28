@@ -19,7 +19,10 @@ namespace ssnwt {
     }
 
     AudioRender::~AudioRender() {
-        if (stream) AAudioStream_close(stream);
+        if (stream) {
+            AAudioStream_requestStop(stream);
+            AAudioStream_close(stream);
+        }
         stream = nullptr;
         ALOGE("Delete AudioRender");
     }

@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 #include <cassert>
 #include <memory>
@@ -24,7 +24,7 @@ namespace ssnwt {
         EGLConfig configs[512];
         EGLint numConfigs = 0;
         eglGetConfigs(mDisplay, configs, 512, &numConfigs);
-        EGLConfig config = 0;
+        EGLConfig config = nullptr;
         for (int i = 0; i < numConfigs; i++) {
             EGLint value = 0;
             eglGetConfigAttrib(mDisplay, configs[i], EGL_RENDERABLE_TYPE, &value);
@@ -50,11 +50,11 @@ namespace ssnwt {
             }
         }
 
-        if (config == 0) {
+        if (config == nullptr) {
             ALOGE("[EGLHelper]failed to find EGL config");
             return false;
         }
-        mSurface = eglCreateWindowSurface(mDisplay, config, window, NULL);
+        mSurface = eglCreateWindowSurface(mDisplay, config, window, nullptr);
         if (mSurface == EGL_NO_SURFACE) {
             ALOGE("[EGLHelper]eglCreateWindowSurface failed");
             return false;
@@ -63,7 +63,7 @@ namespace ssnwt {
                 EGL_CONTEXT_CLIENT_VERSION, 3,
                 EGL_NONE
         };
-        mContext = eglCreateContext(mDisplay, config, NULL, contextAttribs);
+        mContext = eglCreateContext(mDisplay, config, nullptr, contextAttribs);
         if (mContext == EGL_NO_CONTEXT) {
             ALOGE("[EGLHelper]eglCreateContext failed");
             return false;
@@ -95,9 +95,5 @@ namespace ssnwt {
             eglTerminate(mDisplay);
             mDisplay = nullptr;
         }
-    }
-
-    void EGLHelper::swapBuffer() {
-        eglSwapBuffers(mDisplay, mSurface);
     }
 }

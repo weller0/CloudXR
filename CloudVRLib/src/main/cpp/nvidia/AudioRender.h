@@ -17,7 +17,7 @@ namespace ssnwt {
         ~AudioRender();
 
     private:
-        AAudioStream *stream;
+        AAudioStream *stream = nullptr;
     };
 }
 
