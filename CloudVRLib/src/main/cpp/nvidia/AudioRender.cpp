@@ -15,7 +15,7 @@ namespace ssnwt {
         AAudioStreamBuilder_openStream(builder, &stream);
         AAudioStream_setBufferSizeInFrames(stream, AAudioStream_getFramesPerBurst(stream) * 2);
         AAudioStream_requestStart(stream);
-        ALOGE("Create AudioRender");
+        ALOGD("[AudioRender]Create AudioRender");
     }
 
     AudioRender::~AudioRender() {
@@ -24,7 +24,7 @@ namespace ssnwt {
             AAudioStream_close(stream);
         }
         stream = nullptr;
-        ALOGE("Delete AudioRender");
+        ALOGE("[AudioRender]Delete AudioRender");
     }
 
     void AudioRender::write(const void *buffer, int32_t numFrames, int64_t timeoutNanoseconds) {

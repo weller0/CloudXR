@@ -2,6 +2,7 @@
 #define CLOUDXRDEMO_CLOUDXR_H
 
 #include <string>
+#include <thread>
 #include "CloudXRClient.h"
 #include "CloudXRClientOptions.h"
 #include "AudioRender.h"
@@ -57,6 +58,9 @@ namespace ssnwt {
         update_tracking_state_call_back updateTrackingStateCallBack{0};
         trigger_haptic_call_back triggerHapticCallBack{0};
         receive_user_data_call_back receiveUserDataCallBack{0};
+
+        std::mutex audioMutex;
+//        std::mutex cloudMutex;
     };
 } // end namespace ssnwt
 

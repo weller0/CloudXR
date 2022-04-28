@@ -30,6 +30,7 @@ cxrMatrix34 cxrConvert(const matrix4f &m) {
     memcpy(&out, &m, sizeof(out));
     return out;
 }
+
 void updateTrackingState(cxrVRTrackingState *trackingState) {
     XrSpaceLocation location;
     cxrVRTrackingState TrackingState = {};
@@ -51,13 +52,13 @@ void updateTrackingState(cxrVRTrackingState *trackingState) {
                 if (!pOpenXr->getControllerState(eye, &TrackingState.controller[eye].booleanComps,
                                                  &TrackingState.controller[eye].booleanCompsChanged,
                                                  TrackingState.controller[eye].scalarComps)) {
-                    ALOGD("getControllerSpace[%d] (%0.3f, %0.3f, %0.3f, %0.3f), key:%d, %d", eye,
-                          TrackingState.controller[eye].scalarComps[cxrAnalog_Grip],
-                          TrackingState.controller[eye].scalarComps[cxrAnalog_Trigger],
-                          TrackingState.controller[eye].scalarComps[cxrAnalog_TouchpadX],
-                          TrackingState.controller[eye].scalarComps[cxrAnalog_TouchpadY],
-                          TrackingState.controller[eye].booleanComps,
-                          TrackingState.controller[eye].booleanCompsChanged);
+//                    ALOGD("getControllerSpace[%d] (%0.3f, %0.3f, %0.3f, %0.3f), key:%d, %d", eye,
+//                          TrackingState.controller[eye].scalarComps[cxrAnalog_Grip],
+//                          TrackingState.controller[eye].scalarComps[cxrAnalog_Trigger],
+//                          TrackingState.controller[eye].scalarComps[cxrAnalog_TouchpadX],
+//                          TrackingState.controller[eye].scalarComps[cxrAnalog_TouchpadY],
+//                          TrackingState.controller[eye].booleanComps,
+//                          TrackingState.controller[eye].booleanCompsChanged);
                 }
 
                 TrackingState.controller[eye].pose.poseIsValid = cxrTrue;
@@ -98,6 +99,7 @@ void gl_main() {
         pOpenXr->render();
         //std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
     }
+    ALOGD("cloudXr.disconnect()");
     cloudXr.disconnect();
     if (pOpenXr) {
         pOpenXr->release();
@@ -111,9 +113,9 @@ void gl_main() {
     ALOGD("----- exit gl thread -----");
 }
 JNIEXPORT void JNICALL
-Java_com_ssnwt_cloudvr_CloudVRActivity_initialize(JNIEnv *env, jobject thiz,
-                                                  jobject activity, jobject surface,
-                                                  jstring cmd) {
+Java_com_ssnwt_cloudvr_CloudXR_initialize(JNIEnv *env, jclass thiz,
+                                          jobject activity, jobject surface,
+                                          jstring cmd) {
     gNativeWindow = ANativeWindow_fromSurface(env, surface);
     cmdLine = strdup(env->GetStringUTFChars(cmd, nullptr));
     ALOGD ("Java_com_ssnwt_cloudvr_CloudVRActivity_initialize gNativeWindow=%p", gNativeWindow);
@@ -125,7 +127,7 @@ Java_com_ssnwt_cloudvr_CloudVRActivity_initialize(JNIEnv *env, jobject thiz,
     mainThread.detach();
 }
 JNIEXPORT void JNICALL
-Java_com_ssnwt_cloudvr_CloudVRActivity_release(JNIEnv *env, jobject thiz) {
+Java_com_ssnwt_cloudvr_CloudXR_release(JNIEnv *env, jclass thiz) {
     quit = true;
 }
 }

@@ -93,8 +93,13 @@ namespace ssnwt {
         updateTrackingStateCallBack = nullptr;
         triggerHapticCallBack = nullptr;
         receiveUserDataCallBack = nullptr;
-        delete pAudioRender;
-        pAudioRender = nullptr;
+        {
+            // 作用域为当前函数
+            std::lock_guard<std::mutex> lockGuard(audioMutex);
+            delete pAudioRender;
+            pAudioRender = nullptr;
+        }
+        ALOGE("[CloudXR]disconnect");
         if (receiverHandle) {
             cxrDestroyReceiver(receiverHandle);
             receiverHandle = nullptr;
@@ -108,7 +113,7 @@ namespace ssnwt {
             return cxrError_Receiver_Invalid;
         }
         if (clientState != cxrClientState_StreamingSessionInProgress) {
-            ALOGE("receiverHandle is cxrError_Streamer_Not_Ready %s",
+            ALOGE("[CloudXR]receiverHandle is cxrError_Streamer_Not_Ready %s",
                   ClientStateEnumToString(clientState));
             return cxrError_Streamer_Not_Ready;
         }
@@ -205,6 +210,7 @@ namespace ssnwt {
     }
 
     void CloudXR::getTrackingState(cxrVRTrackingState *trackingState) {
+//        std::lock_guard<std::mutex> lockGuard(cloudMutex);
         if (updateTrackingStateCallBack) {
             updateTrackingStateCallBack(trackingState);
         }
@@ -215,7 +221,9 @@ namespace ssnwt {
     }
 
     cxrBool CloudXR::renderAudio(const cxrAudioFrame *audioFrame) {
-        //ALOGD("renderAudio size:%d", audioFrame->streamSizeBytes);
+        //ALOGD("[CloudXR]renderAudio size:%d", audioFrame->streamSizeBytes);
+        // 作用域为当前函数
+        std::lock_guard<std::mutex> lockGuard(audioMutex);
         if (pAudioRender) {
             const uint32_t timeout = audioFrame->streamSizeBytes / CXR_AUDIO_BYTES_PER_MS;
             const uint32_t numFrames = timeout * CXR_AUDIO_SAMPLING_RATE / 1000;
