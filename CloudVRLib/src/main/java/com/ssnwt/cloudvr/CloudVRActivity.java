@@ -1,6 +1,7 @@
 package com.ssnwt.cloudvr;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -24,10 +25,8 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
     private static final int PERMISSIONS_REQUEST_CODE = 12345;
     private static final int RETRY_LAUNCH_COUNT_MAX = 3;
     private static final String CMD_LINE = "-s %s";
-    private String mCmdLine = null;
+    private String mCmdLine = "-s 192.168.1.106";
     private static int sRetryLaunchCount = 0;
-    private Surface mSurface;
-    private boolean hasAllPermissions = false;
     private boolean isInitialized = false;
 
     @Override
@@ -37,28 +36,50 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
         if (!TextUtils.isEmpty(ip)) {
             mCmdLine = getCmdLine(ip);
         }
-        if (hasAllPermissions = checkPermissionsIfNeccessary()) {
-            if (TextUtils.isEmpty(mCmdLine)) {
-                mCmdLine = getCmdLine("192.168.1.106");
-            }
-            SurfaceView surfaceView = new SurfaceView(this);
-            setContentView(surfaceView);
-            surfaceView.getHolder().addCallback(this);
+        if (checkPermissionsIfNeccessary()) {
+            start();
         }
+        SurfaceView surfaceView = new SurfaceView(this);
+        setContentView(surfaceView);
+        surfaceView.getHolder().addCallback(this);
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String ip = getIntent().getStringExtra("ip");
+        if (!TextUtils.isEmpty(ip)) {
+            mCmdLine = getCmdLine(ip);
+        }
+        if (checkPermissionsIfNeccessary()) {
+            start();
+        }
+    }
+
+    public static void startCloudXR(Context context, String ip) {
+        Intent intent = new Intent(context, CloudVRActivity.class);
+        intent.putExtra("ip", ip);
+        context.startActivity(intent);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        SystemPropertyUtils.set("ssnwt.key.home", "0");
+        CloudXR.resume();
+        //SystemPropertyUtils.set("ssnwt.key.home", "0");
         //SystemPropertyUtils.set("ssnwt.ignore_home", "1");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        SystemPropertyUtils.set("ssnwt.key.home", "1");
+        //SystemPropertyUtils.set("ssnwt.key.home", "1");
         //SystemPropertyUtils.set("ssnwt.ignore_home", "0");
+        CloudXR.pause();
+    }
+
+    @Override protected void onDestroy() {
+        super.onDestroy();
+        stop();
     }
 
     @Override
@@ -66,6 +87,7 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
         int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSIONS_REQUEST_CODE) {
+            boolean hasAllPermissions = true;
             // If request is cancelled, the result arrays are empty.
             for (int i = 0; i < grantResults.length; i++) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
@@ -124,27 +146,25 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
         Log.d(TAG, "surfaceCreated");
-        mSurface = holder.getSurface();
-        start();
     }
 
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
         Log.d(TAG, "surfaceChanged (" + width + ", " + height + ").");
+        CloudXR.setSurface(holder.getSurface(), width, height);
     }
 
     @Override
     public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
         Log.d(TAG, "surfaceDestroyed");
-        stop();
     }
 
     private synchronized void start() {
         if (!isInitialized) {
             isInitialized = true;
             Log.d(TAG, "start CloudXR");
-            if (mSurface != null && hasAllPermissions && !TextUtils.isEmpty(mCmdLine)) {
-                CloudXR.initialize(this, mSurface, mCmdLine);
+            if (!TextUtils.isEmpty(mCmdLine)) {
+                CloudXR.initialize(this, mCmdLine);
             }
         }
     }

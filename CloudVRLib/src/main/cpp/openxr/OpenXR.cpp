@@ -43,10 +43,14 @@ namespace ssnwt {
         ALOGD("[OpenXR]xrGetSystem %p", &m_systemId);
     }
 
-    XrResult OpenXR::initialize(ANativeWindow *aNativeWindow, draw_frame_call_back cb) {
+    void OpenXR::setSurface(ANativeWindow *window) {
+        ALOGD("[OpenXR]setSurface window:%p", window);
+        p_NativeWindow = window;
+    }
+
+    XrResult OpenXR::initialize(draw_frame_call_back cb) {
         m_draw_frame_cb = cb;
         ALOGD("[OpenXR]initialize");
-        p_NativeWindow = aNativeWindow;
         CHECK(m_instance != XR_NULL_HANDLE);
         if (m_session == XR_NULL_HANDLE) {
             PFN_xrGetOpenGLESGraphicsRequirementsKHR pfnGetOpenGLESGraphicsRequirementsKHR = nullptr;
@@ -70,9 +74,7 @@ namespace ssnwt {
             ALOGV("[OpenXR]Creating session...");
             EGLDisplay display = eglGetCurrentDisplay();
             EGLContext context = eglGetCurrentContext();
-            EGLSurface surface = eglGetCurrentSurface(EGL_DRAW);
-            ALOGV("[OpenXR]display:%p, context:%p, surface:%p, aNativeWindow:%p",
-                  display, context, surface, aNativeWindow);
+            ALOGV("[OpenXR]display:%p, context:%p", display, context);
             XrGraphicsBindingOpenGLESAndroidKHR graphicsBindingAndroidGLES = {};
             graphicsBindingAndroidGLES.type = XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR;
             graphicsBindingAndroidGLES.next = XR_NULL_HANDLE;
@@ -435,14 +437,12 @@ namespace ssnwt {
                 std::vector<XrSwapchainImageOpenGLESKHR> swapchainImageBuffer(imageCount);
                 for (XrSwapchainImageOpenGLESKHR &image : swapchainImageBuffer) {
                     image.type = XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR;
-                    ALOGV("xmh AllocateSwapchainImageStructs");
                     swapchainImages.push_back(
                             reinterpret_cast<XrSwapchainImageBaseHeader *>(&image));
                 }
                 m_swapchainImageBuffers.push_back(std::move(swapchainImageBuffer));
                 OPENXR_CHECK(xrEnumerateSwapchainImages(swapchain.handle, imageCount, &imageCount,
                                                         swapchainImages[0]));
-                ALOGV("xmh AllocateSwapchainImageStructs 111");
                 m_swapchainImages.insert(
                         std::make_pair(swapchain.handle, std::move(swapchainImages)));
             }

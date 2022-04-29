@@ -6,7 +6,7 @@
 #include "log.h"
 
 namespace ssnwt {
-    bool EGLHelper::initialize(ANativeWindow *window) {
+    bool EGLHelper::initialize() {
         if (mContext)
             return true; // already initialized
 
@@ -24,7 +24,6 @@ namespace ssnwt {
         EGLConfig configs[512];
         EGLint numConfigs = 0;
         eglGetConfigs(mDisplay, configs, 512, &numConfigs);
-        EGLConfig config = nullptr;
         for (int i = 0; i < numConfigs; i++) {
             EGLint value = 0;
             eglGetConfigAttrib(mDisplay, configs[i], EGL_RENDERABLE_TYPE, &value);
@@ -44,28 +43,59 @@ namespace ssnwt {
                 }
             }
             if (attribs[j] == EGL_NONE) {
-                config = configs[i];
+                mConfig = configs[i];
                 ALOGD("[EGLHelper]found EGL config");
                 break;
             }
         }
 
-        if (config == nullptr) {
+        if (mConfig == nullptr) {
             ALOGE("[EGLHelper]failed to find EGL config");
-            return false;
-        }
-        mSurface = eglCreateWindowSurface(mDisplay, config, window, nullptr);
-        if (mSurface == EGL_NO_SURFACE) {
-            ALOGE("[EGLHelper]eglCreateWindowSurface failed");
             return false;
         }
         EGLint contextAttribs[] = {
                 EGL_CONTEXT_CLIENT_VERSION, 3,
                 EGL_NONE
         };
-        mContext = eglCreateContext(mDisplay, config, nullptr, contextAttribs);
+        mContext = eglCreateContext(mDisplay, mConfig, nullptr, contextAttribs);
         if (mContext == EGL_NO_CONTEXT) {
             ALOGE("[EGLHelper]eglCreateContext failed");
+            return false;
+        }
+        ALOGE("[EGLHelper]mDisplay:%p, mContext:%p", mDisplay, mContext);
+        return true;
+    }
+
+    bool EGLHelper::setSurface() {
+        if (mSurface) {
+            eglDestroySurface(mDisplay, mSurface);
+            mSurface = nullptr;
+        }
+        const EGLint surfaceAttribs[] = {EGL_WIDTH, 16, EGL_HEIGHT, 16, EGL_NONE};
+        mSurface = eglCreatePbufferSurface(mDisplay, mConfig, surfaceAttribs);
+        if (mSurface == EGL_NO_SURFACE) {
+            ALOGE("[EGLHelper]eglCreateWindowSurface failed");
+            return false;
+        }
+        if (eglMakeCurrent(mDisplay, mSurface, mSurface, mContext) == EGL_FALSE) {
+            ALOGE("[EGLHelper]eglMakeCurrent failed");
+            return false;
+        }
+
+        eglQuerySurface(mDisplay, mSurface, EGL_WIDTH, &mWidth);
+        eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mHeight);
+        ALOGD("[EGLHelper]PBuffer size(%d, %d)", mWidth, mHeight);
+        return true;
+    }
+
+    bool EGLHelper::setSurface(ANativeWindow *window) {
+        if (mSurface) {
+            eglDestroySurface(mDisplay, mSurface);
+            mSurface = nullptr;
+        }
+        mSurface = eglCreateWindowSurface(mDisplay, mConfig, window, nullptr);
+        if (mSurface == EGL_NO_SURFACE) {
+            ALOGE("[EGLHelper]eglCreateWindowSurface failed");
             return false;
         }
         if (eglMakeCurrent(mDisplay, mSurface, mSurface, mContext) == EGL_FALSE) {

@@ -24,6 +24,7 @@ namespace ssnwt {
             gl_FragColor = texture2D(sTexture, vTextureCoord);
         }
     )_";
+#ifdef XR_USE_OPENXR
     constexpr float PositionVertex[2][12] = {
             {
                     // X, Y, Z
@@ -34,12 +35,30 @@ namespace ssnwt {
             },
             {
                     // X, Y, Z
-                    -1.0f,  1.0f, 0,
+                    -1.0f, 1.0f, 0,
                     1.0f, 1.0f, 0,
-                    -1.0f,  -1.0f, 0,
+                    -1.0f, -1.0f, 0,
                     1.0f, -1.0f, 0,
             }
     };
+#else
+    constexpr float PositionVertex[2][12] = {
+            {
+                    // X, Y, Z
+                    -1.0f, 1.0f, 0,
+                    0.0f, 1.0f, 0,
+                    -1.0f, -1.0f, 0,
+                    0.0f, -1.0f, 0,
+            },
+            {
+                    // X, Y, Z
+                    0.0f,  1.0f, 0,
+                    1.0f, 1.0f, 0,
+                    0.0f,  -1.0f, 0,
+                    1.0f, -1.0f, 0,
+            }
+    };
+#endif
     constexpr float TextureVertex[] = {
             // U, V
             0.f, 1.f,
@@ -51,6 +70,8 @@ namespace ssnwt {
     class GraphicRender {
     public:
         static void clear();
+
+        static void clear(uint32_t eye);
 
         void initialize(int32_t width, int32_t height);
 

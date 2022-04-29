@@ -28,6 +28,10 @@ include_directories(${OPENXR_SDK_ROOT}/include)
 add_definitions(-DXR_USE_PLATFORM_ANDROID)
 add_definitions(-DXR_USE_GRAPHICS_API_OPENGL_ES)
 
+# 用于单独调试OpenXR和CloudXR
+add_definitions(-DXR_USE_OPENXR)
+add_definitions(-DXR_USE_CLOUDXR)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(cloudxrlib-jni

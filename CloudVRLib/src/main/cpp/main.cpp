@@ -4,17 +4,33 @@
 #include "log.h"
 #include "EGLHelper.h"
 #include "GraphicRender.h"
+
+#ifdef XR_USE_CLOUDXR
+
 #include "nvidia/CloudXR.h"
+
+#endif // XR_USE_CLOUDXR
+
+#ifdef XR_USE_OPENXR
+
 #include "openxr/OpenXR.h"
 #include "matrix.h"
 
+#endif// XR_USE_OPENXR
+
 ssnwt::GraphicRender *pGraphicRender = nullptr;
+#ifdef XR_USE_OPENXR
 ssnwt::OpenXR *pOpenXr = nullptr;
+#endif // XR_USE_OPENXR
 char *cmdLine;
-ANativeWindow *gNativeWindow = nullptr;
+ANativeWindow *pNativeWindow = nullptr;
+int32_t mSurfaceWidth = 0, mSurfaceHeight = 0;
 bool quit = false;
+bool paused = true;
+bool isSurfaceChanged = false;
 
 extern "C" {
+#ifdef XR_USE_OPENXR
 matrix4f getTransformFromPose(const XrPosef pose) {
     const matrix4f rotation = createFromQuaternion(pose.orientation.x, pose.orientation.y,
                                                    pose.orientation.z, pose.orientation.w);
@@ -52,7 +68,8 @@ void updateTrackingState(cxrVRTrackingState *trackingState) {
                 if (!pOpenXr->getControllerState(eye, &TrackingState.controller[eye].booleanComps,
                                                  &TrackingState.controller[eye].booleanCompsChanged,
                                                  TrackingState.controller[eye].scalarComps)) {
-//                    ALOGD("getControllerSpace[%d] (%0.3f, %0.3f, %0.3f, %0.3f), key:%d, %d", eye,
+//                    ALOGD("[main]getControllerSpace[%d] (%0.3f, %0.3f, %0.3f, %0.3f), key:%d, %d",
+//                          eye,
 //                          TrackingState.controller[eye].scalarComps[cxrAnalog_Grip],
 //                          TrackingState.controller[eye].scalarComps[cxrAnalog_Trigger],
 //                          TrackingState.controller[eye].scalarComps[cxrAnalog_TouchpadX],
@@ -75,59 +92,145 @@ void updateTrackingState(cxrVRTrackingState *trackingState) {
 void onDraw(uint32_t eye) {
     if (pGraphicRender) pGraphicRender->draw(eye);
 }
+#elif XR_USE_CLOUDXR
+#include "nvidia/SensorUtils.h"
+void updateTrackingState(cxrVRTrackingState *trackingState) {
+    cxrVRTrackingState TrackingState = {};
+    TrackingState.hmd.pose = ssnwt::readImu();
+    TrackingState.hmd.pose.poseIsValid = cxrTrue;
+    TrackingState.hmd.pose.deviceIsConnected = cxrTrue;
+    TrackingState.hmd.pose.trackingResult = cxrTrackingResult_Running_OK;
+    if (trackingState != nullptr) {
+        *trackingState = TrackingState;
+    }
+}
+#endif // XR_USE_OPENXR
 
 void gl_main() {
-    ALOGD("+++++ Enter gl thread +++++");
+    ALOGD("[main]+++++ Enter gl thread +++++");
     ssnwt::EGLHelper eglHelper{};
+    eglHelper.initialize();
+#ifdef XR_USE_OPENXR
+    eglHelper.setSurface();
+    pOpenXr->initialize(onDraw);
+#else
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    eglHelper.setSurface(pNativeWindow);
+#endif
+
+#ifdef XR_USE_CLOUDXR
     ssnwt::CloudXR cloudXr{};
-    eglHelper.initialize(gNativeWindow);
-    ALOGD("window (%d, %d)", eglHelper.getWidth(), eglHelper.getHeight());
-    pGraphicRender->initialize(eglHelper.getWidth(), eglHelper.getHeight());
-    cloudXr.connect(cmdLine, updateTrackingState, nullptr, nullptr);
-    pOpenXr->initialize(gNativeWindow, onDraw);
     cxrFramesLatched framesLatched;
-    while (!quit && pGraphicRender && pOpenXr) {
+#endif // XR_USE_CLOUDXR
+    while (!quit && pGraphicRender) {
+        if (paused || pNativeWindow == nullptr) {
+            ALOGW("[main]Already paused, so do not render.");
+#ifdef XR_USE_CLOUDXR
+            cloudXr.disconnect();
+#endif // XR_USE_CLOUDXR
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            continue;
+        }
+        if (isSurfaceChanged) {
+            isSurfaceChanged = false;
+#ifdef XR_USE_CLOUDXR
+            cloudXr.connect(cmdLine, updateTrackingState, nullptr, nullptr);
+#endif // XR_USE_CLOUDXR
+#ifdef XR_USE_OPENXR
+            pOpenXr->setSurface(pNativeWindow);
+#endif // XR_USE_OPENXR
+            eglHelper.setSurface(pNativeWindow);
+            ALOGD("[main]window (%d, %d)", mSurfaceWidth, mSurfaceHeight);
+            pGraphicRender->initialize(mSurfaceWidth, mSurfaceHeight);
+        }
+
+        if (!eglHelper.isValid()) {
+            ALOGW("[main]EGL is not valid, so do not render.");
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            continue;
+        }
         ssnwt::GraphicRender::clear();
+#ifdef XR_USE_CLOUDXR
         bool cloudxrPrepared = cloudXr.preRender(&framesLatched) == cxrError_Success;
+#endif // XR_USE_CLOUDXR
         for (int32_t eye = 0; eye < 2; eye++) {
-            if (cloudxrPrepared && pGraphicRender->setupFrameBuffer(eye)) {
-                cloudXr.render(eye, framesLatched);
+            if (pGraphicRender->setupFrameBuffer(eye)) {
+#ifdef XR_USE_CLOUDXR
+                if (cloudxrPrepared) cloudXr.render(eye, framesLatched);
+#else
+                ssnwt::GraphicRender::clear(eye);
+#endif // XR_USE_CLOUDXR
             }
             ssnwt::GraphicRender::bindDefaultFrameBuffer();
+#ifndef XR_USE_OPENXR
+            if (pGraphicRender) pGraphicRender->draw(eye);
+#endif // XR_USE_OPENXR
         }
+#ifdef XR_USE_CLOUDXR
         if (cloudxrPrepared) cloudXr.postRender(framesLatched);
+#endif // XR_USE_CLOUDXR
+
+#ifdef XR_USE_OPENXR
         pOpenXr->render();
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
+#else
+        eglHelper.swapBuffers();
+#endif // XR_USE_OPENXR
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
     }
-    ALOGD("cloudXr.disconnect()");
+#ifdef XR_USE_CLOUDXR
+    ALOGD("[main]cloudXr.disconnect()");
     cloudXr.disconnect();
+#endif // XR_USE_CLOUDXR
+
+#ifdef XR_USE_OPENXR
     if (pOpenXr) {
         pOpenXr->release();
         pOpenXr = nullptr;
     }
+#endif
     if (pGraphicRender) {
         pGraphicRender->release();
         pGraphicRender = nullptr;
     }
     eglHelper.release();
-    ALOGD("----- exit gl thread -----");
+    ALOGD("[main]----- exit gl thread -----");
 }
 JNIEXPORT void JNICALL
 Java_com_ssnwt_cloudvr_CloudXR_initialize(JNIEnv *env, jclass thiz,
-                                          jobject activity, jobject surface,
-                                          jstring cmd) {
-    gNativeWindow = ANativeWindow_fromSurface(env, surface);
+                                          jobject activity, jstring cmd) {
     cmdLine = strdup(env->GetStringUTFChars(cmd, nullptr));
-    ALOGD ("Java_com_ssnwt_cloudvr_CloudVRActivity_initialize gNativeWindow=%p", gNativeWindow);
     JavaVM *vm;
     env->GetJavaVM(&vm);
+#ifdef XR_USE_OPENXR
     pOpenXr = new ssnwt::OpenXR(vm, activity);
+#endif
     pGraphicRender = new ssnwt::GraphicRender();
     std::thread mainThread(gl_main);
     mainThread.detach();
 }
 JNIEXPORT void JNICALL
+Java_com_ssnwt_cloudvr_CloudXR_setSurface(JNIEnv *env, jclass clazz, jobject surface,
+                                          jint width, jint height) {
+    isSurfaceChanged = true;
+    mSurfaceWidth = width;
+    mSurfaceHeight = height;
+    pNativeWindow = ANativeWindow_fromSurface(env, surface);
+    ALOGD("[main]setSurface gNativeWindow=%p", pNativeWindow);
+}
+JNIEXPORT void JNICALL
+Java_com_ssnwt_cloudvr_CloudXR_resume(JNIEnv *env, jclass clazz) {
+    ALOGD("[main]Resume");
+    paused = false;
+}
+JNIEXPORT void JNICALL
+Java_com_ssnwt_cloudvr_CloudXR_pause(JNIEnv *env, jclass clazz) {
+    ALOGD("[main]Pause");
+    pNativeWindow = nullptr;
+    paused = true;
+}
+JNIEXPORT void JNICALL
 Java_com_ssnwt_cloudvr_CloudXR_release(JNIEnv *env, jclass thiz) {
+    ALOGD("[main]Release");
     quit = true;
 }
 }

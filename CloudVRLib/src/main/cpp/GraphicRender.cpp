@@ -7,7 +7,16 @@ namespace ssnwt {
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
+    void GraphicRender::clear(uint32_t eye) {
+        glClearColor(0.1, eye ? 0 : 0.3, eye ? 0.3 : 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
     void GraphicRender::initialize(int32_t width, int32_t height) {
+        if (mWidth > 0 && mHeight > 0 && mTextureID[0] > 0 && mFrameBuffer[0] > 0) {
+            ALOGD("[GraphicRender]Already initialize");
+            return;
+        }
         mWidth = width;
         mHeight = height;
         createProgram(VERTEX_SHADER, FRAGMENT_SHADER);

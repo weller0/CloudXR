@@ -7,18 +7,25 @@
 namespace ssnwt {
     class EGLHelper {
     public:
-        bool initialize(ANativeWindow *window);
+        bool initialize();
+
+        bool setSurface(ANativeWindow *window);
+
+        bool setSurface();
 
         void release();
 
         bool isValid() { return mContext != 0 && mSurface != 0; }
 
-        EGLint getWidth() { return mWidth; }
+        EGLDisplay getDisplay() { return mDisplay; }
 
-        EGLint getHeight() { return mHeight; }
+        EGLContext getContext() { return mContext; }
+
+        void swapBuffers() { eglSwapBuffers(mDisplay, mSurface); }
 
     private:
         EGLDisplay mDisplay = 0;
+        EGLConfig mConfig = 0;
         EGLContext mContext = 0;
         EGLSurface mSurface = 0;
         EGLint mWidth = 0, mHeight = 0;

@@ -93,14 +93,14 @@ namespace ssnwt {
         updateTrackingStateCallBack = nullptr;
         triggerHapticCallBack = nullptr;
         receiveUserDataCallBack = nullptr;
-        {
+        if (pAudioRender != nullptr) {
             // 作用域为当前函数
             std::lock_guard<std::mutex> lockGuard(audioMutex);
             delete pAudioRender;
             pAudioRender = nullptr;
         }
         ALOGE("[CloudXR]disconnect");
-        if (receiverHandle) {
+        if (receiverHandle != nullptr) {
             cxrDestroyReceiver(receiverHandle);
             receiverHandle = nullptr;
         }

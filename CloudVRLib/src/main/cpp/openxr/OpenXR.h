@@ -12,6 +12,7 @@
 #include <array>
 #include <map>
 #include <list>
+#include <vector>
 #include <CloudXRCommon.h>
 
 namespace Side {
@@ -55,9 +56,9 @@ namespace ssnwt {
     public:
         OpenXR(JavaVM *vm, jobject activity);
 
-        XrResult initialize(ANativeWindow *aNativeWindow, draw_frame_call_back cb);
+        XrResult initialize(draw_frame_call_back cb);
 
-        void processEvent();
+        void setSurface(ANativeWindow *window);
 
         XrResult render();
 
@@ -84,6 +85,8 @@ namespace ssnwt {
                                     uint32_t *booleanCompsChanged, float *scalarComps);
 
     private:
+        void processEvent();
+
         const XrEventDataBaseHeader *tryReadNextEvent();
 
         bool RenderLayer(XrTime predictedDisplayTime, XrCompositionLayerProjection &layer);
