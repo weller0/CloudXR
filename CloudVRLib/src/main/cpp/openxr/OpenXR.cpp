@@ -575,8 +575,10 @@ namespace ssnwt {
         OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &primaryButtonValue));
         if (primaryButtonValue.isActive == XR_TRUE && primaryButtonValue.currentState) {
             *booleanComps |= ButtonMaskFromId(cxrButton_A);
+            ALOGD("Button_A/X -> Down");
         } else if (*booleanComps & ButtonMaskFromId(cxrButton_A)) {
             *booleanComps ^= ButtonMaskFromId(cxrButton_A);
+            ALOGD("Button_A/X -> Up");
         }
 
         getInfo.action = m_input.secondaryButtonAction;
@@ -584,8 +586,10 @@ namespace ssnwt {
         OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &secondaryButtonValue));
         if (secondaryButtonValue.isActive == XR_TRUE && secondaryButtonValue.currentState) {
             *booleanComps |= ButtonMaskFromId(cxrButton_B);
+            ALOGD("Button_B/Y -> Down");
         } else if (*booleanComps & ButtonMaskFromId(cxrButton_B)) {
             *booleanComps ^= ButtonMaskFromId(cxrButton_B);
+            ALOGD("Button_B/Y -> Up");
         }
 
         getInfo.action = m_input.gripPressedAction;
@@ -593,8 +597,10 @@ namespace ssnwt {
         OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &gripPressedValue));
         if (gripPressedValue.isActive == XR_TRUE && gripPressedValue.currentState) {
             *booleanComps |= ButtonMaskFromId(cxrButton_Grip_Click);
+            ALOGD("Grip -> Down");
         } else if (*booleanComps & ButtonMaskFromId(cxrButton_Grip_Click)) {
             *booleanComps ^= ButtonMaskFromId(cxrButton_Grip_Click);
+            ALOGD("Grip -> Up");
             scalarComps[cxrAnalog_Grip] = 0;
         }
 
@@ -603,8 +609,10 @@ namespace ssnwt {
         OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &menuValue));
         if (menuValue.isActive == XR_TRUE && menuValue.currentState) {
             *booleanComps |= ButtonMaskFromId(cxrButton_System);
+            ALOGD("System -> Down");
         } else if (*booleanComps & ButtonMaskFromId(cxrButton_System)) {
             *booleanComps ^= ButtonMaskFromId(cxrButton_System);
+            ALOGD("System -> Up");
         }
 
         getInfo.action = m_input.triggerPressedAction;
@@ -612,8 +620,10 @@ namespace ssnwt {
         OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &triggerPressedValue));
         if (triggerPressedValue.isActive == XR_TRUE && triggerPressedValue.currentState) {
             *booleanComps |= ButtonMaskFromId(cxrButton_Trigger_Click);
+            ALOGD("Trigger -> Down");
         } else if (*booleanComps & ButtonMaskFromId(cxrButton_Trigger_Click)) {
             *booleanComps ^= ButtonMaskFromId(cxrButton_Trigger_Click);
+            ALOGD("Trigger -> Up");
             scalarComps[cxrAnalog_Trigger] = 0;
         }
 
@@ -622,8 +632,10 @@ namespace ssnwt {
         OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &thumbstickClickedValue));
         if (thumbstickClickedValue.isActive == XR_TRUE && thumbstickClickedValue.currentState) {
             *booleanComps |= ButtonMaskFromId(cxrButton_Joystick_Click);
+            ALOGD("Touchpad -> Down");
         } else if (*booleanComps & ButtonMaskFromId(cxrButton_Joystick_Click)) {
             *booleanComps ^= ButtonMaskFromId(cxrButton_Joystick_Click);
+            ALOGD("Touchpad -> Up");
             scalarComps[cxrAnalog_TouchpadX] = 0;
             scalarComps[cxrAnalog_TouchpadY] = 0;
         }
@@ -633,10 +645,8 @@ namespace ssnwt {
         OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &thumbstickTouchedValue));
         if (thumbstickTouchedValue.isActive == XR_TRUE && thumbstickTouchedValue.currentState) {
             *booleanComps |= ButtonMaskFromId(cxrButton_Joystick_Touch);
-        } else {
-            if (*booleanComps & ButtonMaskFromId(cxrButton_Joystick_Touch)) {
-                *booleanComps ^= ButtonMaskFromId(cxrButton_Joystick_Touch);
-            }
+        } else if (*booleanComps & ButtonMaskFromId(cxrButton_Joystick_Touch)) {
+            *booleanComps ^= ButtonMaskFromId(cxrButton_Joystick_Touch);
         }
 
         getInfo.action = m_input.triggerTouchedAction;
@@ -644,10 +654,8 @@ namespace ssnwt {
         OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getInfo, &triggerTouchedValue));
         if (triggerTouchedValue.isActive == XR_TRUE && triggerTouchedValue.currentState) {
             *booleanComps |= ButtonMaskFromId(cxrButton_Trigger_Touch);
-        } else {
-            if (*booleanComps & ButtonMaskFromId(cxrButton_Trigger_Touch)) {
-                *booleanComps ^= ButtonMaskFromId(cxrButton_Trigger_Touch);
-            }
+        } else if (*booleanComps & ButtonMaskFromId(cxrButton_Trigger_Touch)) {
+            *booleanComps ^= ButtonMaskFromId(cxrButton_Trigger_Touch);
         }
 
         getInfo.action = m_input.gripAction;

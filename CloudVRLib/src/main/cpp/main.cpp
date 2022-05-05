@@ -28,6 +28,7 @@ int32_t mSurfaceWidth = 0, mSurfaceHeight = 0;
 bool quit = false;
 bool paused = true;
 bool isSurfaceChanged = false;
+uint32_t lastBooleanComps = 0;
 
 extern "C" {
 #ifdef XR_USE_OPENXR
@@ -65,19 +66,11 @@ void updateTrackingState(cxrVRTrackingState *trackingState) {
                 TrackingState.controller[eye].pose.deviceToAbsoluteTracking =
                         cxrConvert(getTransformFromPose(location.pose));
 
-                if (!pOpenXr->getControllerState(eye, &TrackingState.controller[eye].booleanComps,
-                                                 &TrackingState.controller[eye].booleanCompsChanged,
-                                                 TrackingState.controller[eye].scalarComps)) {
-//                    ALOGD("[main]getControllerSpace[%d] (%0.3f, %0.3f, %0.3f, %0.3f), key:%d, %d",
-//                          eye,
-//                          TrackingState.controller[eye].scalarComps[cxrAnalog_Grip],
-//                          TrackingState.controller[eye].scalarComps[cxrAnalog_Trigger],
-//                          TrackingState.controller[eye].scalarComps[cxrAnalog_TouchpadX],
-//                          TrackingState.controller[eye].scalarComps[cxrAnalog_TouchpadY],
-//                          TrackingState.controller[eye].booleanComps,
-//                          TrackingState.controller[eye].booleanCompsChanged);
-                }
-
+                TrackingState.controller[eye].booleanComps = lastBooleanComps;
+                pOpenXr->getControllerState(eye, &TrackingState.controller[eye].booleanComps,
+                                            &TrackingState.controller[eye].booleanCompsChanged,
+                                            TrackingState.controller[eye].scalarComps);
+                lastBooleanComps = TrackingState.controller[eye].booleanComps;
                 TrackingState.controller[eye].pose.poseIsValid = cxrTrue;
                 TrackingState.controller[eye].pose.deviceIsConnected = cxrTrue;
                 TrackingState.controller[eye].pose.trackingResult = cxrTrackingResult_Running_OK;
