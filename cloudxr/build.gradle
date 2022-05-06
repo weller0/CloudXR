@@ -26,6 +26,6 @@ android {
 }
 
 dependencies {
-
-implementation project(path: ':CloudVRLib')
+  implementation fileTree(dir: 'libs', include: ['*.jar'])
+  implementation project(path: ':CloudVRLib')
 }

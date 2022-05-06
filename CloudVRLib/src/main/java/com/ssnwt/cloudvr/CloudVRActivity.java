@@ -1,21 +1,14 @@
 package com.ssnwt.cloudvr;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,12 +18,13 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
     private static final int PERMISSIONS_REQUEST_CODE = 12345;
     private static final int RETRY_LAUNCH_COUNT_MAX = 3;
     private static final String CMD_LINE = "-s %s";
-    private String mCmdLine = "-s 192.168.1.106";
+    //private String mCmdLine = "-s 192.168.1.106";
+    private String mCmdLine = "-s 192.168.50.108";
     private static int sRetryLaunchCount = 0;
     private boolean isInitialized = false;
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         String ip = getIntent().getStringExtra("ip");
         if (!TextUtils.isEmpty(ip)) {
@@ -53,12 +47,6 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
         if (checkPermissionsIfNeccessary()) {
             start();
         }
-    }
-
-    public static void startCloudXR(Context context, String ip) {
-        Intent intent = new Intent(context, CloudVRActivity.class);
-        intent.putExtra("ip", ip);
-        context.startActivity(intent);
     }
 
     @Override
@@ -120,15 +108,13 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
                 List<String> permissionsNotGrantedYet =
                     new ArrayList<>(info.requestedPermissions.length);
                 for (String p : info.requestedPermissions) {
-                    if (ContextCompat.checkSelfPermission(this, p)
-                        != PackageManager.PERMISSION_GRANTED) {
+                    if (checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED) {
                         permissionsNotGrantedYet.add(p);
                     }
                 }
                 Log.w(TAG, "permissionsNotGrantedYet:" + permissionsNotGrantedYet);
                 if (permissionsNotGrantedYet.size() > 0) {
-                    ActivityCompat.requestPermissions(this, permissionsNotGrantedYet.toArray(
-                        new String[0]),
+                    requestPermissions(permissionsNotGrantedYet.toArray(new String[0]),
                         PERMISSIONS_REQUEST_CODE);
                     return false;
                 }
@@ -144,18 +130,18 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
     }
 
     @Override
-    public void surfaceCreated(@NonNull SurfaceHolder holder) {
+    public void surfaceCreated(SurfaceHolder holder) {
         Log.d(TAG, "surfaceCreated");
     }
 
     @Override
-    public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         Log.d(TAG, "surfaceChanged (" + width + ", " + height + ").");
         CloudXR.setSurface(holder.getSurface(), width, height);
     }
 
     @Override
-    public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+    public void surfaceDestroyed(SurfaceHolder holder) {
         Log.d(TAG, "surfaceDestroyed");
     }
 

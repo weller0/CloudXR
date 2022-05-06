@@ -1,6 +1,30 @@
 plugins {
   id 'com.android.library'
 }
+def pathOut = project.rootDir.absolutePath + "/outLibs/"
+
+static def getGitCommit(def module) {
+  def cmd = 'git log --pretty=format:%h -1 '
+  if (module != null) {
+    cmd += module
+  }
+  def gitCommit = cmd.execute().text.trim()
+
+  if (gitCommit.isEmpty()) {
+    cmd = 'git log --pretty=format:%h -1 ./'
+    gitCommit = cmd.execute().text.trim()
+  }
+  assert !gitCommit.isEmpty()
+  gitCommit
+}
+
+clean {}.doLast {
+  for (String name : file(pathOut).listFiles()) {
+    if (name.contains("outLibs")) {
+      project.delete(name)
+    }
+  }
+}
 
 android {
   compileSdk 31
@@ -9,7 +33,7 @@ android {
     minSdk 29
     targetSdk 31
     versionCode 1
-    versionName "1.0"
+    versionName "1.0.0-" + getGitCommit(project.name)
     consumerProguardFiles "consumer-rules.pro"
 
     externalNativeBuild {
@@ -20,9 +44,25 @@ android {
   }
 
   buildTypes {
+    def version_code = "\"" + defaultConfig.versionCode + "\""
+    def version_name = "\"" + defaultConfig.versionName + "\""
     release {
       minifyEnabled false
+      buildConfigField("String", "VERSION_NAME", version_name)
+      buildConfigField("String", "VERSION_CODE", version_code)
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    }
+    debug {
+      buildConfigField("String", "VERSION_NAME", version_name)
+      buildConfigField("String", "VERSION_CODE", version_code)
+    }
+    android.libraryVariants.all { variant ->
+      if (variant.buildType.name == "release") {
+        variant.outputs.all {
+          outputFileName = "svr_plugin_cloud_xr.aar"
+        }
+        variant.getPackageLibraryProvider().get().destinationDir = new File(pathOut)
+      }
     }
   }
   compileOptions {
@@ -37,7 +77,5 @@ android {
 }
 
 dependencies {
-  implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
-  implementation 'androidx.appcompat:appcompat:1.4.1'
-  implementation 'com.google.android.material:material:1.5.0'
+  implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
