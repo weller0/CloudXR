@@ -8,6 +8,7 @@
 #ifdef XR_USE_CLOUDXR
 
 #include "nvidia/CloudXR.h"
+#include "matrix.h"
 
 #endif // XR_USE_CLOUDXR
 
@@ -86,10 +87,26 @@ void onDraw(uint32_t eye) {
     if (pGraphicRender) pGraphicRender->draw(eye);
 }
 #elif XR_USE_CLOUDXR
-#include "nvidia/SensorUtils.h"
+float angleY = 0;
+matrix4f getTransformFromPose() {
+    angleY += 0.001;
+    if (angleY > 2 * M_PI) angleY = 0;
+    const matrix4f rotation = rotationY(angleY);
+    const matrix4f translation = createTranslation(0, 0, 0);
+    return multiply(&translation, &rotation);
+}
+
+cxrMatrix34 cxrConvert(const matrix4f &m) {
+    cxrMatrix34 out{};
+    // The matrices are compatible so doing a memcpy() here
+    //  noting that we are a [3][4] and ovr uses [4][4]
+    memcpy(&out, &m, sizeof(out));
+    return out;
+}
 void updateTrackingState(cxrVRTrackingState *trackingState) {
     cxrVRTrackingState TrackingState = {};
-    TrackingState.hmd.pose = ssnwt::readImu();
+    TrackingState.hmd.pose.deviceToAbsoluteTracking =
+            cxrConvert(getTransformFromPose());
     TrackingState.hmd.pose.poseIsValid = cxrTrue;
     TrackingState.hmd.pose.deviceIsConnected = cxrTrue;
     TrackingState.hmd.pose.trackingResult = cxrTrackingResult_Running_OK;

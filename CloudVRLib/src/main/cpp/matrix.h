@@ -4,6 +4,9 @@
 
 #ifndef CLOUDXR_MATRIX_H
 #define CLOUDXR_MATRIX_H
+
+#include <math.h>
+
 typedef struct matrix4f_ {
     float M[4][4];
 } matrix4f;
@@ -96,6 +99,18 @@ matrix4f createTranslation(const float x, const float y, const float z) {
     out.M[3][2] = 0.0f;
     out.M[3][3] = 1.0f;
     return out;
+}
+
+matrix4f rotationX(float angle) {
+    return createFromQuaternion(sin(angle * 0.5), 0, 0, cos(angle * 0.5));
+}
+
+matrix4f rotationY(float angle) {
+    return createFromQuaternion(0, sin(angle * 0.5), 0, cos(angle * 0.5));
+}
+
+matrix4f rotationZ(float angle) {
+    return createFromQuaternion(0, 0, sin(angle * 0.5), cos(angle * 0.5));
 }
 
 #endif //CLOUDXR_MATRIX_H

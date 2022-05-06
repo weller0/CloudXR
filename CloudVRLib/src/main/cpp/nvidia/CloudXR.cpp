@@ -1,7 +1,6 @@
 #include <EGL/egl.h>
 #include "CloudXR.h"
 #include "log.h"
-#include "SensorUtils.h"
 
 #define CASE(x) \
 case x:     \
