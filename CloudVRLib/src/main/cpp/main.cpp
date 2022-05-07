@@ -4,6 +4,7 @@
 #include "log.h"
 #include "EGLHelper.h"
 #include "GraphicRender.h"
+#include "FpsCounter.h"
 
 #ifdef XR_USE_CLOUDXR
 
@@ -19,13 +20,22 @@
 
 #endif// XR_USE_OPENXR
 
+struct HMDInfo {
+    char *cmdLine;
+    uint32_t fovX;
+    uint32_t fovY;
+    uint32_t fps;
+    float ipd;
+    float predOffset;
+};
+
 ssnwt::GraphicRender *pGraphicRender = nullptr;
 #ifdef XR_USE_OPENXR
 ssnwt::OpenXR *pOpenXr = nullptr;
 #endif // XR_USE_OPENXR
-char *cmdLine;
 ANativeWindow *pNativeWindow = nullptr;
 int32_t mSurfaceWidth = 0, mSurfaceHeight = 0;
+struct HMDInfo hmdInfo{};
 bool quit = false;
 bool paused = true;
 bool isSurfaceChanged = false;
@@ -144,7 +154,10 @@ void gl_main() {
         if (isSurfaceChanged) {
             isSurfaceChanged = false;
 #ifdef XR_USE_CLOUDXR
-            cloudXr.connect(cmdLine, updateTrackingState, nullptr, nullptr);
+            cloudXr.connect(hmdInfo.cmdLine, mSurfaceWidth, mSurfaceHeight,
+                            hmdInfo.fovX, hmdInfo.fovY,
+                            hmdInfo.ipd, hmdInfo.predOffset, 1, 1, hmdInfo.fps,
+                            updateTrackingState, nullptr, nullptr);
 #endif // XR_USE_CLOUDXR
 #ifdef XR_USE_OPENXR
             pOpenXr->setSurface(pNativeWindow);
@@ -159,6 +172,7 @@ void gl_main() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             continue;
         }
+        ssnwt::frameStart();
         ssnwt::GraphicRender::clear();
 #ifdef XR_USE_CLOUDXR
         bool cloudxrPrepared = cloudXr.preRender(&framesLatched) == cxrError_Success;
@@ -185,7 +199,13 @@ void gl_main() {
 #else
         eglHelper.swapBuffers();
 #endif // XR_USE_OPENXR
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
+
+        ssnwt::frameEnd();
+#ifdef XR_USE_CLOUDXR
+        if (!cloudxrPrepared) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+#endif // XR_USE_CLOUDXR
     }
 #ifdef XR_USE_CLOUDXR
     ALOGD("[main]cloudXr.disconnect()");
@@ -207,10 +227,16 @@ void gl_main() {
 }
 JNIEXPORT void JNICALL
 Java_com_ssnwt_cloudvr_CloudXR_initialize(JNIEnv *env, jclass thiz,
-                                          jobject activity, jstring cmd) {
-    cmdLine = strdup(env->GetStringUTFChars(cmd, nullptr));
+                                          jobject activity, jstring cmd, jint fovX, jint fovY,
+                                          jint fps, jfloat ipd, jfloat predOffset) {
     JavaVM *vm;
     env->GetJavaVM(&vm);
+    hmdInfo.cmdLine = strdup(env->GetStringUTFChars(cmd, nullptr));
+    hmdInfo.fovX = fovX;
+    hmdInfo.fovY = fovY;
+    hmdInfo.fps = fps;
+    hmdInfo.ipd = ipd;
+    hmdInfo.predOffset = predOffset;
 #ifdef XR_USE_OPENXR
     pOpenXr = new ssnwt::OpenXR(vm, activity);
 #endif

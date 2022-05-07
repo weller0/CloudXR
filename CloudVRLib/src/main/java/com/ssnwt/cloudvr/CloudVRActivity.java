@@ -17,19 +17,14 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
     private static final String TAG = "CloudXR_CloudVRActivity";
     private static final int PERMISSIONS_REQUEST_CODE = 12345;
     private static final int RETRY_LAUNCH_COUNT_MAX = 3;
-    private static final String CMD_LINE = "-s %s";
-    //private String mCmdLine = "-s 192.168.1.106";
-    private String mCmdLine = "-s 192.168.50.108";
+    private CloudXR.HMDInfo mHMDInfo;
     private static int sRetryLaunchCount = 0;
     private boolean isInitialized = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        String ip = getIntent().getStringExtra("ip");
-        if (!TextUtils.isEmpty(ip)) {
-            mCmdLine = getCmdLine(ip);
-        }
+        mHMDInfo = CloudXR.getHmdInfo(getIntent());
         if (checkPermissionsIfNeccessary()) {
             start();
         }
@@ -40,10 +35,7 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
 
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        String ip = getIntent().getStringExtra("ip");
-        if (!TextUtils.isEmpty(ip)) {
-            mCmdLine = getCmdLine(ip);
-        }
+        mHMDInfo = CloudXR.getHmdInfo(getIntent());
         if (checkPermissionsIfNeccessary()) {
             start();
         }
@@ -125,10 +117,6 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
         return true;
     }
 
-    private String getCmdLine(String ip) {
-        return String.format(CMD_LINE, ip);
-    }
-
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         Log.d(TAG, "surfaceCreated");
@@ -149,8 +137,9 @@ public class CloudVRActivity extends Activity implements SurfaceHolder.Callback 
         if (!isInitialized) {
             isInitialized = true;
             Log.d(TAG, "start CloudXR");
-            if (!TextUtils.isEmpty(mCmdLine)) {
-                CloudXR.initialize(this, mCmdLine);
+            if (mHMDInfo != null) {
+                CloudXR.initialize(this, mHMDInfo.cmd, mHMDInfo.fovX, mHMDInfo.fovY,
+                    mHMDInfo.fps, mHMDInfo.ipd, mHMDInfo.predOffset);
             }
         }
     }

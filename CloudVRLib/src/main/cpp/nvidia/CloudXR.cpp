@@ -39,6 +39,9 @@ const char *StateReasonEnumToString(cxrStateReason reason) {
 
 namespace ssnwt {
     cxrError CloudXR::connect(const char *cmdLine,
+                              uint32_t width, uint32_t height, uint32_t fovX, uint32_t fovY,
+                              float ipd, float predOffset,
+                              float playAreaX, float playAreaZ, uint32_t fps,
                               update_tracking_state_call_back tracking_state_cb,
                               trigger_haptic_call_back trigger_haptic_cb,
                               receive_user_data_call_back receive_user_data_cb) {
@@ -47,7 +50,8 @@ namespace ssnwt {
         receiveUserDataCallBack = receive_user_data_cb;
         GOptions.ParseString(cmdLine);
         ALOGV("[CloudXR]mServerIP %s", GOptions.mServerIP.c_str());
-        deviceDesc = getDeviceDesc();
+        deviceDesc = getDeviceDesc(width, height, fovX, fovY, ipd, predOffset,
+                                   playAreaX, playAreaZ, fps);
         cxrClientCallbacks callbacks = getClientCallbacks();
         cxrGraphicsContext context{cxrGraphicsContext_GLES};
         context.egl.display = eglGetCurrentDisplay();
@@ -138,11 +142,18 @@ namespace ssnwt {
         return cxrError_Success; //true
     }
 
-    cxrDeviceDesc CloudXR::getDeviceDesc() const {
-        uint32_t dispW = 4320;
-        uint32_t dispH = 2160;
-        uint32_t fovX = 105, fovY = 105;
-        float playX = 1, playZ = 1; // 半径1米
+    cxrDeviceDesc CloudXR::getDeviceDesc(uint32_t dispW, uint32_t dispH,
+                                         uint32_t fovX, uint32_t fovY,
+                                         float ipd, float predOffset,
+                                         float playAreaX, float playAreaZ, uint32_t fps) const {
+//        uint32_t dispW = 4320;
+//        uint32_t dispH = 2160;
+//        uint32_t fovX = 105, fovY = 105;
+//        float playX = 1, playZ = 1; // 半径1米
+//        float ipd = 0.064;
+//        float predOffset = 0.02;
+        ALOGD("[CloudXR]disp(%d, %d), fov(%d, %d), playArea(%f, %f), ipd:%f, pred:%f",
+              dispW, dispH, fovX, fovY, playAreaX, playAreaZ, ipd, predOffset);
         cxrDeviceDesc desc = {};
         desc.width = dispW / 2;
         desc.height = dispH;
@@ -152,9 +163,9 @@ namespace ssnwt {
         const int maxHeight = (int) (desc.maxResFactor * (float) desc.height);
         ALOGD("[CloudXR]HMD size requested as %d x %d, max %d x %d",
               desc.width, desc.height, maxWidth, maxHeight);
-        desc.fps = 72;
-        desc.ipd = 0.064f;
-        desc.predOffset = 0.02f;
+        desc.fps = (float) fps;
+        desc.ipd = ipd;
+        desc.predOffset = predOffset;
         desc.receiveAudio = static_cast<cxrBool>(GOptions.mReceiveAudio);
         desc.sendAudio = static_cast<cxrBool>(GOptions.mSendAudio);
         desc.posePollFreq = 0;
@@ -182,8 +193,8 @@ namespace ssnwt {
         desc.chaperone.origin.m[0][1] = desc.chaperone.origin.m[0][2] = desc.chaperone.origin.m[0][3] = 0;
         desc.chaperone.origin.m[1][0] = desc.chaperone.origin.m[1][2] = desc.chaperone.origin.m[1][3] = 0;
         desc.chaperone.origin.m[2][0] = desc.chaperone.origin.m[2][1] = desc.chaperone.origin.m[2][3] = 0;
-        desc.chaperone.playArea.v[0] = 2.f * playX;
-        desc.chaperone.playArea.v[1] = 2.f * playZ;
+        desc.chaperone.playArea.v[0] = 2.f * playAreaX;
+        desc.chaperone.playArea.v[1] = 2.f * playAreaZ;
         return desc;
     }
 

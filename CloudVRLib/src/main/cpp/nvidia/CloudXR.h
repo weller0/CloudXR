@@ -19,6 +19,9 @@ namespace ssnwt {
     class CloudXR {
     public:
         cxrError connect(const char *cmdLine,
+                         uint32_t dispW, uint32_t dispH, uint32_t fovX, uint32_t fovY,
+                         float ipd, float predOffset,
+                         float playAreaX, float playAreaZ, uint32_t fps,
                          update_tracking_state_call_back tracking_state_cb,
                          trigger_haptic_call_back trigger_haptic_cb,
                          receive_user_data_call_back receive_user_data_cb);
@@ -33,7 +36,10 @@ namespace ssnwt {
 
     private:
 
-        cxrDeviceDesc getDeviceDesc() const;
+        cxrDeviceDesc getDeviceDesc(uint32_t dispW, uint32_t dispH,
+                                    uint32_t fovX, uint32_t fovY,
+                                    float ipd, float predOffset,
+                                    float playAreaX, float playAreaZ, uint32_t fps) const;
 
         static cxrClientCallbacks getClientCallbacks();
 
