@@ -64,12 +64,19 @@ namespace ssnwt {
 
         XrResult release();
 
+        uint64_t GetTimeInSeconds() {
+            struct timespec now;
+            clock_gettime(CLOCK_MONOTONIC, &now);
+            return now.tv_sec * 1e9 + now.tv_nsec;
+        }
+
         XrResult getLocateSpace(XrSpaceLocation *location) {
-            return xrLocateSpace(m_appSpace, m_appSpace, 0, location);
+            return xrLocateSpace(m_appSpace, m_appSpace, GetTimeInSeconds() + 2000000, location);
         }
 
         XrResult getControllerSpace(uint32_t side, XrSpaceLocation *location) {
-            return xrLocateSpace(m_input.handSpace[side], m_appSpace, 0, location);
+            return xrLocateSpace(m_input.handSpace[side], m_appSpace,
+                                 GetTimeInSeconds() + 2000000, location);
         }
 
         XrResult syncAction() {
