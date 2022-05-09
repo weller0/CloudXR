@@ -16,8 +16,8 @@ public class CloudXR {
     private static final String EXTRA_IPD = "ipd";
     private static final String EXTRA_PRED_OFFSET = "pred_offset";
     private static final String CMD_LINE = "-s %s";
-    private static final int DEFAULT_FOV_X = 105;
-    private static final int DEFAULT_FOV_Y = 105;
+    private static final int DEFAULT_FOV_X = 95;
+    private static final int DEFAULT_FOV_Y = 95;
     private static final int DEFAULT_FPS = 72;
     private static final float DEFAULT_IPD = 0.064f;
     private static final float DEFAULT_PRED_OFFSET = 0.02f;

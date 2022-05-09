@@ -169,7 +169,7 @@ namespace ssnwt {
         desc.receiveAudio = static_cast<cxrBool>(GOptions.mReceiveAudio);
         desc.sendAudio = static_cast<cxrBool>(GOptions.mSendAudio);
         desc.posePollFreq = 0;
-        desc.disablePosePrediction = cxrTrue;
+        desc.disablePosePrediction = cxrFalse;
         desc.angularVelocityInDeviceSpace = cxrFalse;
         desc.foveatedScaleFactor = static_cast<uint32_t>((GOptions.mFoveation < 100)
                                                          ? GOptions.mFoveation : 0);
